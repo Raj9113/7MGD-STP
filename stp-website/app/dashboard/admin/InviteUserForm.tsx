@@ -12,7 +12,7 @@ export default function InviteUserForm() {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0062b8]/5 to-transparent">
+      <div className="px-6 py-4 border-b border-gray-200 bg-linear-to-r from-[#0062b8]/5 to-transparent">
         <h3 className="text-lg font-bold text-gray-800">➕ Invite New User</h3>
         <p className="text-sm text-gray-500 mt-0.5">
           The user will receive an email with a link to set their password.
@@ -87,11 +87,10 @@ export default function InviteUserForm() {
         {/* Feedback message */}
         {state.message && (
           <div
-            className={`mt-4 p-3 rounded-lg text-sm font-medium ${
-              state.success
+            className={`mt-4 p-3 rounded-lg text-sm font-medium ${state.success
                 ? 'bg-green-50 border border-green-200 text-green-800'
                 : 'bg-red-50 border border-red-200 text-red-800'
-            }`}
+              }`}
           >
             {state.message}
           </div>
