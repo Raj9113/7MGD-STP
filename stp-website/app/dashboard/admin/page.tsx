@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { canViewAdmin } from '@/lib/access';
 import InviteUserForm from './InviteUserForm';
 import UsersTable from './UsersTable';
+import ActivityLogPanel from './ActivityLog';
+import { getLogs } from '@/app/actions/logs';
 
 const DEPT_BADGE: Record<string, string> = {
   Mechanical: 'bg-orange-100 text-orange-700',
@@ -50,6 +52,9 @@ export default async function AdminPage() {
     acc[dept] = (acc[dept] ?? 0) + 1;
     return acc;
   }, {});
+
+  // Fetch initial logs (first 25, no filter)
+  const logsResult = await getLogs({ limit: 25, offset: 0 });
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -107,6 +112,16 @@ export default async function AdminPage() {
           ))}
         </div>
       </div>
+
+      {/* Divider */}
+      <hr className="border-gray-200" />
+
+      {/* Activity Log */}
+      <ActivityLogPanel
+        initialLogs={logsResult.logs}
+        initialTotal={logsResult.total}
+      />
+
     </div>
   );
 }

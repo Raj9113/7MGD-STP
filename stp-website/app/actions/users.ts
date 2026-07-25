@@ -3,10 +3,12 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { logActivity } from '@/lib/supabase/logger';
+import { headers } from 'next/headers';
 
 const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Admin', 'Viewer'];
 
-/** Verify that the currently logged-in user is an Admin. */
+/** Verify that the currently logged-in user is an Admin. Returns the caller's user + profile. */
 async function assertAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -15,13 +17,21 @@ async function assertAdmin() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('department')
+    .select('id, full_name, department')
     .eq('id', user.id)
     .single();
 
   if (profile?.department !== 'Admin') {
     throw new Error('Forbidden — Admin access required.');
   }
+
+  return { user, profile };
+}
+
+/** Build a fake Request-like object from Next.js headers for logging */
+async function buildRequestContext() {
+  const hdrs = await headers();
+  return { headers: hdrs };
 }
 
 // ── Invite New User ────────────────────────────────────────────────────────────
@@ -92,6 +102,18 @@ export async function inviteUser(
       };
     }
 
+    const { user: adminUser, profile: adminProfile } = await assertAdmin();
+    const reqCtx = await buildRequestContext();
+    await logActivity({
+      userId:     adminUser.id,
+      userName:   adminProfile?.full_name ?? adminUser.email ?? null,
+      userEmail:  adminUser.email ?? null,
+      department: adminProfile?.department ?? null,
+      action:     'INVITE_USER',
+      details:    `Invited ${fullName} (${email}) as ${department}${employeeId ? ` · Emp ID: ${employeeId}` : ''}`,
+      request:    reqCtx,
+    });
+
     revalidatePath('/dashboard/admin');
     return {
       success: true,
@@ -139,6 +161,20 @@ export async function updateUserDepartment(
       return { success: false, message: error.message };
     }
 
+    // Fetch the updated user's name for the log
+    const { data: updatedProfile } = await admin.from('profiles').select('full_name').eq('id', userId).single();
+    const { user: adminUser, profile: adminProfile } = await assertAdmin();
+    const reqCtx = await buildRequestContext();
+    await logActivity({
+      userId:     adminUser.id,
+      userName:   adminProfile?.full_name ?? adminUser.email ?? null,
+      userEmail:  adminUser.email ?? null,
+      department: adminProfile?.department ?? null,
+      action:     'UPDATE_ROLE',
+      details:    `Changed role of ${updatedProfile?.full_name ?? userId} to ${department}`,
+      request:    reqCtx,
+    });
+
     revalidatePath('/dashboard/admin');
     return { success: true, message: `Department updated to ${department}.` };
   } catch (err) {
@@ -166,12 +202,28 @@ export async function deleteUser(
 
     const admin = createAdminClient();
 
+    // Fetch the user's name/email before deleting (profile will be gone after)
+    const { data: targetProfile } = await admin.from('profiles').select('full_name, department').eq('id', userId).single();
+    const { data: targetAuthUser } = await admin.auth.admin.getUserById(userId);
+
     // Delete from auth — cascade will remove profile row too
     const { error } = await admin.auth.admin.deleteUser(userId);
 
     if (error) {
       return { success: false, message: error.message };
     }
+
+    const { user: adminUser, profile: adminProfile } = await assertAdmin();
+    const reqCtx = await buildRequestContext();
+    await logActivity({
+      userId:     adminUser.id,
+      userName:   adminProfile?.full_name ?? adminUser.email ?? null,
+      userEmail:  adminUser.email ?? null,
+      department: adminProfile?.department ?? null,
+      action:     'DELETE_USER',
+      details:    `Deleted user ${targetProfile?.full_name ?? 'Unknown'} (${targetAuthUser?.user?.email ?? userId}) · Dept: ${targetProfile?.department ?? 'Unknown'}`,
+      request:    reqCtx,
+    });
 
     revalidatePath('/dashboard/admin');
     return { success: true, message: 'User deleted successfully.' };
