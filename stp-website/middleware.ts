@@ -42,8 +42,8 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow public routes: login, auth callback, static assets
-  const publicPaths = ['/login', '/auth/callback'];
+  // Allow public routes: login, auth callback, set-password, request-access, static assets
+  const publicPaths = ['/login', '/auth/callback', '/auth/set-password', '/request-access'];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   // If user is not logged in and trying to access a protected route → redirect to /login
@@ -58,6 +58,21 @@ export async function middleware(request: NextRequest) {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = '/dashboard';
     return NextResponse.redirect(dashboardUrl);
+  }
+
+  // If user has a temp password (must_change_password), redirect to set-password
+  // Skip this check if they're already on set-password to avoid a redirect loop
+  if (user && !pathname.startsWith('/auth/set-password')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('must_change_password')
+      .eq('id', user.id)
+      .single();
+    if (profile?.must_change_password) {
+      const spUrl = request.nextUrl.clone();
+      spUrl.pathname = '/auth/set-password';
+      return NextResponse.redirect(spUrl);
+    }
   }
 
   return supabaseResponse;

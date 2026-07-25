@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -115,6 +116,20 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Request Access Link */}
+          <div className="mt-6 pt-5 border-t border-gray-100 text-center">
+            <p className="text-sm text-gray-500">
+              Don&apos;t have an account?
+            </p>
+            <Link
+              href="/request-access"
+              id="request-access-link"
+              className="inline-block mt-2 text-sm font-semibold text-[#0062b8] hover:underline"
+            >
+              📨 Request Portal Access
+            </Link>
+          </div>
         </div>
       </div>
     </div>

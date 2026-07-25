@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import { canViewAdmin } from '@/lib/access';
 import InviteUserForm from './InviteUserForm';
@@ -56,6 +57,24 @@ export default async function AdminPage() {
   // Fetch initial logs (first 25, no filter)
   const logsResult = await getLogs({ limit: 25, offset: 0 });
 
+  // Fetch pending registration + role requests
+  const adminDb = createAdminClient();
+  const { data: regRequests } = await adminDb
+    .from('registration_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  const { data: roleRequests } = await adminDb
+    .from('role_requests')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  const pendingReg  = regRequests  ?? [];
+  const pendingRole = roleRequests ?? [];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+
   return (
     <div className="space-y-6 max-w-5xl">
 
@@ -83,6 +102,85 @@ export default async function AdminPage() {
 
       {/* Invite Form */}
       <InviteUserForm />
+
+      {/* Pending Registration Requests */}
+      {pendingReg.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-amber-200 flex items-center gap-2">
+            <span className="text-amber-600 text-lg">📋</span>
+            <div>
+              <h3 className="font-bold text-amber-800">Pending Registration Requests</h3>
+              <p className="text-xs text-amber-600">{pendingReg.length} request{pendingReg.length !== 1 ? 's' : ''} awaiting approval</p>
+            </div>
+          </div>
+          <div className="divide-y divide-amber-100">
+            {pendingReg.map((r) => (
+              <div key={r.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">{r.full_name}</p>
+                  <p className="text-xs text-gray-500">{r.email} · {r.department}{r.employee_id ? ` · ${r.employee_id}` : ''}</p>
+                  {r.notes && <p className="text-xs text-gray-400 italic mt-0.5">&ldquo;{r.notes}&rdquo;</p>}
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {new Date(r.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <a
+                    href={`${siteUrl}/api/admin/approve-registration?token=${r.token}`}
+                    target="_blank"
+                    className="text-xs bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-green-700 transition-all"
+                  >
+                    ✅ Approve
+                  </a>
+                  <a
+                    href={`${siteUrl}/api/admin/reject-registration?token=${r.token}`}
+                    target="_blank"
+                    className="text-xs bg-red-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-red-700 transition-all"
+                  >
+                    ❌ Reject
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Pending Role Requests */}
+      {pendingRole.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-blue-200 flex items-center gap-2">
+            <span className="text-blue-600 text-lg">⬆️</span>
+            <div>
+              <h3 className="font-bold text-blue-800">Pending Role Promotion Requests</h3>
+              <p className="text-xs text-blue-600">{pendingRole.length} request{pendingRole.length !== 1 ? 's' : ''} awaiting approval</p>
+            </div>
+          </div>
+          <div className="divide-y divide-blue-100">
+            {pendingRole.map((r) => (
+              <div key={r.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                <div>
+                  <p className="font-semibold text-gray-800 text-sm">{r.user_name}</p>
+                  <p className="text-xs text-gray-500">{r.user_email}</p>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    <span className="font-medium">{r.current_department}</span>
+                    <span className="mx-1.5 text-gray-400">→</span>
+                    <span className="font-bold text-[#0062b8]">{r.requested_department}</span>
+                  </p>
+                  {r.reason && <p className="text-xs text-gray-400 italic mt-0.5">&ldquo;{r.reason}&rdquo;</p>}
+                </div>
+                <a
+                  href={`${siteUrl}/api/admin/approve-role?token=${r.token}`}
+                  target="_blank"
+                  className="text-xs bg-green-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-green-700 transition-all shrink-0"
+                >
+                  ✅ Approve Role Change
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Users Table */}
       <UsersTable profiles={profiles} />

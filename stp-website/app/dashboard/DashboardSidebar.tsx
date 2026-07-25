@@ -45,6 +45,23 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
         })}
       </nav>
 
+      {/* Request Role Change — for non-admin users */}
+      {role !== 'Admin' && (
+        <div className="px-3 pb-2">
+          <Link
+            href="/dashboard/request-role"
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              pathname.startsWith('/dashboard/request-role')
+                ? 'bg-[#0062b8] text-white shadow-sm'
+                : 'text-[#0062b8] border border-[#0062b8]/30 hover:bg-blue-50'
+            }`}
+          >
+            <span className="text-lg leading-none">⬆️</span>
+            <span>Request Role Change</span>
+          </Link>
+        </div>
+      )}
+
       {/* Role badge at bottom */}
       <div className="p-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
@@ -72,3 +89,4 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
     </aside>
   );
 }
+
