@@ -16,6 +16,7 @@ interface DashboardNavProps {
   fullName: string;
   department: string;
   employeeId: string;
+  onMenuClick: () => void;
 }
 
 export default function DashboardNav({
@@ -23,6 +24,7 @@ export default function DashboardNav({
   fullName,
   department,
   employeeId,
+  onMenuClick,
 }: DashboardNavProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -40,8 +42,19 @@ export default function DashboardNav({
   return (
     <nav className="bg-[#0062b8] shadow-md border-b-2 border-[#ffcc00]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Left: Logo + Title */}
+        {/* Left: Hamburger (mobile) + Logo + Title */}
         <div className="flex items-center gap-3">
+          {/* Hamburger — mobile only */}
+          <button
+            id="sidebar-toggle-btn"
+            onClick={onMenuClick}
+            className="md:hidden text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Open navigation"
+          >
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <div className="border-2 border-[#ffcc00] rounded-lg px-3 py-0.5">
             <span className="text-white text-xl font-extrabold tracking-wide">AIP</span>
           </div>

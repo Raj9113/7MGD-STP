@@ -1,7 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import DashboardNav from './DashboardNav';
-import DashboardSidebar from './DashboardSidebar';
+import DashboardShell from './DashboardShell';
 
 export default async function DashboardLayout({
   children,
@@ -27,19 +26,13 @@ export default async function DashboardLayout({
   const department = profile?.department ?? 'Unknown';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <DashboardNav
-        email={user.email ?? ''}
-        fullName={profile?.full_name ?? 'User'}
-        department={department}
-        employeeId={profile?.employee_id ?? ''}
-      />
-      <div className="flex flex-1 overflow-hidden">
-        <DashboardSidebar role={department} />
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardShell
+      email={user.email ?? ''}
+      fullName={profile?.full_name ?? 'User'}
+      department={department}
+      employeeId={profile?.employee_id ?? ''}
+    >
+      {children}
+    </DashboardShell>
   );
 }

@@ -6,9 +6,10 @@ import { getAllowedNavLinks } from '@/lib/access';
 
 interface DashboardSidebarProps {
   role: string;
+  onNavigate?: () => void;
 }
 
-export default function DashboardSidebar({ role }: DashboardSidebarProps) {
+export default function DashboardSidebar({ role, onNavigate }: DashboardSidebarProps) {
   const pathname = usePathname();
   const links = getAllowedNavLinks(role);
 
@@ -29,6 +30,7 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() => onNavigate?.()}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group ${
                 isActive
                   ? 'bg-[#0062b8] text-white shadow-sm'
@@ -50,6 +52,7 @@ export default function DashboardSidebar({ role }: DashboardSidebarProps) {
         <div className="px-3 pb-2">
           <Link
             href="/dashboard/request-role"
+            onClick={() => onNavigate?.()}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
               pathname.startsWith('/dashboard/request-role')
                 ? 'bg-[#0062b8] text-white shadow-sm'
