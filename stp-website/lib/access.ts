@@ -10,6 +10,11 @@
 
 export type STPRole = 'Mechanical' | 'Electrical' | 'Housekeeping' | 'Admin' | 'Viewer';
 
+/** Can this role view the live camera feed? Currently all logged-in roles can. */
+export function canViewCamera(_role: string): boolean {
+  return true; // Change to: return role === 'Admin'; to restrict access
+}
+
 export type DeptSlug = 'mechanical' | 'electrical' | 'housekeeping';
 
 const DEPT_SLUG_TO_ROLE: Record<DeptSlug, STPRole> = {
@@ -53,6 +58,9 @@ export function getAllowedNavLinks(role: string): NavLink[] {
   }
   if (canViewDept(role, 'housekeeping')) {
     links.push({ label: 'Housekeeping', href: '/dashboard/housekeeping', icon: '🧹' });
+  }
+  if (canViewCamera(role)) {
+    links.push({ label: 'Live Camera', href: '/dashboard/camera', icon: '📷' });
   }
   if (canViewAdmin(role)) {
     links.push({ label: 'Admin Panel', href: '/dashboard/admin', icon: '🛡️' });
