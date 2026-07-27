@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { canViewDept, canViewAdmin } from '@/lib/access';
+import CameraFeed from './camera/CameraFeed';
 
 const PLANT_STATS = [
   { label: 'Design Capacity', value: '7 MLD', icon: '💧', color: 'blue' },
@@ -107,6 +108,14 @@ export default async function DashboardOverviewPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Live NVR Camera Feed ─────────────────────────────────────────── */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
+          Live Camera
+        </h3>
+        <CameraFeed />
       </div>
 
       {/* Department Quick-Access */}
