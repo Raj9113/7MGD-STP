@@ -30,6 +30,12 @@ function SingleCamera({
         hlsInstance = new Hls({
           lowLatencyMode: true,
           backBufferLength: 10,
+          xhrSetup: (xhr, url) => {
+            if (url.includes('.m3u8')) {
+              const char = url.includes('?') ? '&' : '?';
+              xhr.open('GET', url + char + 't=' + Date.now(), true);
+            }
+          }
         });
         hlsInstance.loadSource(streamUrl);
         hlsInstance.attachMedia(videoRef.current);
@@ -46,7 +52,7 @@ function SingleCamera({
           }
         });
       } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-        videoRef.current.src = streamUrl;
+        videoRef.current.src = `${streamUrl}?t=${Date.now()}`;
         videoRef.current.addEventListener('loadedmetadata', () => {
           if (!destroyed) {
             setStatus('playing');
@@ -144,13 +150,17 @@ export default function CameraFeed() {
         }
         const data = await res.json();
         
-        // Parse the URL: The user set it to "https://domain.com/stream/stream.m3u8"
-        // We want to extract just the base "https://domain.com/stream"
+        // Parse the URL: The user might set "https://domain.com", "https://domain.com/stream", or "https://domain.com/stream/stream.m3u8"
+        // We want to ensure the base always ends with "/stream" because the Express server serves files under /stream
         let base = data.url;
         if (base.endsWith('/stream.m3u8')) {
           base = base.replace(/\/stream\.m3u8$/, '');
         } else if (base.endsWith('/')) {
           base = base.slice(0, -1);
+        }
+        
+        if (!base.endsWith('/stream')) {
+          base = `${base}/stream`;
         }
         
         setBaseUrl(base);
@@ -221,7 +231,9 @@ export default function CameraFeed() {
     );
   }
 
-  // 2x2 Grid View
+  // The exact camera IDs from the user's custom server script
+  const cameraIds = ['12', '14', '26', '2'];
+
   return (
     <div className="space-y-4 max-w-5xl">
       <div className="flex items-center gap-3">
@@ -233,12 +245,12 @@ export default function CameraFeed() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[1, 2, 3, 4].map(num => (
+        {cameraIds.map(id => (
           <SingleCamera 
-            key={num}
-            streamUrl={`${baseUrl}/cam${num}/stream.m3u8`}
-            title={`Camera ${num}`}
-            onExpand={() => setExpandedCam(num)}
+            key={id}
+            streamUrl={`${baseUrl}/cam${id}/stream.m3u8`}
+            title={`Camera ${id}`}
+            onExpand={() => setExpandedCam(id as any)}
           />
         ))}
       </div>
