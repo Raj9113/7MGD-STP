@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { canViewDept, isReadOnly } from '@/lib/access';
+import LiveCamera from '../LiveCamera';
 
 // ── Mock Housekeeping Data ─────────────────────────────────────────────────────
 
@@ -153,6 +154,9 @@ export default async function HousekeepingPage() {
           </button>
         )}
       </div>
+
+      {/* Live Camera */}
+      <LiveCamera />
 
       {/* Quick alerts */}
       {(lowChemicals.length > 0 || lowPPE.length > 0) && (

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { canViewDept, isReadOnly } from '@/lib/access';
+import LiveCamera from '../LiveCamera';
 
 // ── Mock STP Data ─────────────────────────────────────────────────────────────
 
@@ -138,6 +139,9 @@ export default async function MechanicalPage() {
           </button>
         )}
       </div>
+
+      {/* Live Camera */}
+      <LiveCamera />
 
       {/* Flow Readings */}
       <div>

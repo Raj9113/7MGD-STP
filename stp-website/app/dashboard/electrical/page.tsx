@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { canViewDept, isReadOnly } from '@/lib/access';
+import LiveCamera from '../LiveCamera';
 
 // ── Mock Electrical Data ───────────────────────────────────────────────────────
 
@@ -135,6 +136,9 @@ export default async function ElectricalPage() {
           </button>
         )}
       </div>
+
+      {/* Live Camera */}
+      <LiveCamera />
 
       {/* Power Parameters */}
       <div>
