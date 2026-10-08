@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import SiteMap from './SiteMap';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -129,6 +130,9 @@ export default function LoginPage() {
             >
               📨 Request Portal Access
             </Link>
+            <div>
+              <SiteMap />
+            </div>
           </div>
         </div>
       </div>
