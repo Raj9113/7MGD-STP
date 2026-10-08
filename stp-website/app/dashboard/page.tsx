@@ -48,6 +48,15 @@ const DEPT_CARDS = [
     statusColor: 'bg-blue-100 text-blue-700',
     alerts: 0,
   },
+  {
+    slug: 'laboratory' as const,
+    label: 'Laboratory',
+    icon: '🧪',
+    summary: 'Effluent Quality, Daily Lab Reports, Sample Photos, Power Use',
+    status: 'Reports Available',
+    statusColor: 'bg-cyan-100 text-cyan-700',
+    alerts: 0,
+  },
 ];
 
 export default async function DashboardOverviewPage() {

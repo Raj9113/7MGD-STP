@@ -7,6 +7,7 @@ const BADGE: Record<string, string> = {
   public: 'bg-green-100 text-green-700',
   all: 'bg-blue-100 text-blue-700',
   department: 'bg-yellow-100 text-yellow-700',
+  editors: 'bg-cyan-100 text-cyan-700',
   admin: 'bg-purple-100 text-purple-700',
 };
 

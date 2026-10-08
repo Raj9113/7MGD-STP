@@ -3,12 +3,13 @@
 import { useActionState, useState } from 'react';
 import { updateUserDepartment, deleteUser, type UpdateDeptState, type DeleteUserState } from '@/app/actions/users';
 
-const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer', 'Admin'];
+const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer', 'Admin'];
 
 const DEPT_BADGE: Record<string, string> = {
   Mechanical: 'bg-orange-100 text-orange-700',
   Electrical: 'bg-yellow-100 text-yellow-700',
   Housekeeping: 'bg-green-100 text-green-700',
+  Laboratory: 'bg-cyan-100 text-cyan-700',
   Admin: 'bg-purple-100 text-purple-700',
   Viewer: 'bg-gray-100 text-gray-600',
 };

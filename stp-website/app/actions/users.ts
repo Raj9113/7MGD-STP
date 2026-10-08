@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { logActivity } from '@/lib/supabase/logger';
 import { headers } from 'next/headers';
 
-const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Admin', 'Viewer'];
+const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Admin', 'Viewer'];
 
 /** Verify that the currently logged-in user is an Admin. Returns the caller's user + profile. */
 async function assertAdmin() {

@@ -5,7 +5,7 @@ import { sendEmail, buildAdminRegistrationRequestEmail } from '@/lib/email';
 import { revalidatePath } from 'next/cache';
 import crypto from 'crypto';
 
-const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer'];
+const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer'];
 
 export interface RegistrationRequestState {
   success: boolean;

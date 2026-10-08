@@ -11,11 +11,12 @@ const DEPT_BADGE: Record<string, string> = {
   Mechanical: 'bg-orange-100 text-orange-700',
   Electrical: 'bg-yellow-100 text-yellow-700',
   Housekeeping: 'bg-green-100 text-green-700',
+  Laboratory: 'bg-cyan-100 text-cyan-700',
   Admin: 'bg-purple-100 text-purple-700',
   Viewer: 'bg-gray-100 text-gray-600',
 };
 
-const DEPT_ORDER = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer', 'Admin'];
+const DEPT_ORDER = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer', 'Admin'];
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -195,7 +196,8 @@ export default async function AdminPage() {
             { role: 'Mechanical', icon: '⚙️', access: 'Mechanical dept page only. Can log entries and update work orders.' },
             { role: 'Electrical', icon: '⚡', access: 'Electrical dept page only. Can log entries and acknowledge alarms.' },
             { role: 'Housekeeping', icon: '🧹', access: 'Housekeeping dept page only. Can update tasks and log sludge disposal.' },
-            { role: 'Viewer', icon: '👁', access: 'All 3 dept pages — read-only. Cannot edit, comment or trigger any action.' },
+            { role: 'Laboratory', icon: '🧪', access: 'Laboratory dept page only. Lab analysis reports and effluent quality trends.' },
+            { role: 'Viewer', icon: '👁', access: 'All 4 dept pages — read-only. Cannot edit, comment or trigger any action.' },
             { role: 'Admin', icon: '🛡️', access: 'Full access to all pages + Admin Panel. Can invite users and manage roles.' },
           ].map((r) => (
             <div key={r.role} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">

@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import { inviteUser, type InviteUserState } from '@/app/actions/users';
 
-const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer', 'Admin'];
+const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer', 'Admin'];
 
 const INITIAL_STATE: InviteUserState = { success: false, message: '' };
 

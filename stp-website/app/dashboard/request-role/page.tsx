@@ -4,12 +4,13 @@ import { useActionState } from 'react';
 import { submitRoleRequest, type RoleRequestState } from '@/app/actions/role-request';
 import Link from 'next/link';
 
-const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer'];
+const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer'];
 
 const DEPT_INFO: Record<string, { icon: string; desc: string }> = {
   Mechanical: { icon: '⚙️', desc: 'Can log mechanical entries and update work orders.' },
   Electrical: { icon: '⚡', desc: 'Can log electrical entries and acknowledge alarms.' },
   Housekeeping: { icon: '🧹', desc: 'Can update tasks and log sludge disposal.' },
+  Laboratory: { icon: '🧪', desc: 'Can view lab analysis reports and effluent quality trends.' },
   Viewer: { icon: '👁', desc: 'Read-only access to all department pages.' },
 };
 

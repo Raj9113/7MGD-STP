@@ -5,7 +5,7 @@ import { useActionState } from 'react';
 import { submitRegistrationRequest, type RegistrationRequestState } from '@/app/actions/registration';
 import Link from 'next/link';
 
-const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Viewer'];
+const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer'];
 
 const INIT: RegistrationRequestState = { success: false, message: '' };
 

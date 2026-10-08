@@ -8,6 +8,7 @@ const DEPT_COLORS: Record<string, string> = {
   Mechanical: 'bg-orange-100 text-orange-800',
   Electrical: 'bg-yellow-100 text-yellow-800',
   Housekeeping: 'bg-green-100 text-green-800',
+  Laboratory: 'bg-cyan-100 text-cyan-800',
   Admin: 'bg-purple-100 text-purple-800',
 };
 

@@ -3,7 +3,7 @@
  * Keep in sync with the routes under /app and the "Site map" table in the root README.md.
  */
 
-export type SiteMapAccess = 'public' | 'all' | 'department' | 'admin';
+export type SiteMapAccess = 'public' | 'all' | 'department' | 'editors' | 'admin';
 
 export interface SiteMapEntry {
   label: string;
@@ -23,6 +23,7 @@ export const ACCESS_LABELS: Record<SiteMapAccess, string> = {
   public: 'Open to everyone',
   all: 'All signed-in users',
   department: 'Own department (Admin & Viewer see all)',
+  editors: 'Laboratory & Admin',
   admin: 'Admin only',
 };
 
@@ -52,6 +53,8 @@ export const SITE_MAP: SiteMapSection[] = [
       { label: 'Mechanical', href: '/dashboard/mechanical', icon: '⚙️', description: 'Mechanical department page.', access: 'department' },
       { label: 'Electrical', href: '/dashboard/electrical', icon: '⚡', description: 'Electrical department page.', access: 'department' },
       { label: 'Housekeeping', href: '/dashboard/housekeeping', icon: '🧹', description: 'Housekeeping department page.', access: 'department' },
+      { label: 'Laboratory', href: '/dashboard/laboratory', icon: '🧪', description: 'Monthly lab results, effluent quality vs. limits, daily reports with sample photos and power use.', access: 'department' },
+      { label: 'Laboratory daily entry', href: '/dashboard/laboratory/entry', icon: '📝', description: 'Form for the chemist and assistant to enter or correct a day’s readings, power reading and photographs.', access: 'editors' },
     ],
   },
   {
