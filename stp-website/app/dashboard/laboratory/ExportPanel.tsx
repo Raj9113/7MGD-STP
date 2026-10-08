@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fetchFile, saveBlob } from '@/lib/download';
 
 interface ExportPanelProps {
   month: string;
@@ -26,25 +27,6 @@ const dateInput =
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-async function fetchFile(url: string): Promise<{ blob: Blob; name: string | null }> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    const body = await res.json().catch(() => null);
-    throw new Error(body?.error ?? `The download failed (${res.status}).`);
-  }
-  return { blob: await res.blob(), name: /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? null };
-}
-
-function save(blob: Blob, name: string) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
-}
-
 export default function ExportPanel({ month, monthLabel, selectedDay, firstDate, lastDate }: ExportPanelProps) {
   const [mode, setMode] = useState<Mode>(selectedDay ? 'day' : 'month');
   const [from, setFrom] = useState(selectedDay ?? `${month}-01`);
@@ -66,7 +48,7 @@ export default function ExportPanel({ month, monthLabel, selectedDay, firstDate,
         ? `/api/lab/export/excel?month=${month}`
         : `/api/lab/export/word?from=${range[0]}&to=${range[1]}&photos=${photos ? 1 : 0}`;
       const { blob, name } = await fetchFile(url);
-      save(blob, name ?? (kind === 'excel' ? `Lab Report ${month}.xlsx` : `Lab Report ${range[0]}.docx`));
+      saveBlob(blob, name ?? (kind === 'excel' ? `Lab Report ${month}.xlsx` : `Lab Report ${range[0]}.docx`));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The download failed. Please try again.');
     } finally {

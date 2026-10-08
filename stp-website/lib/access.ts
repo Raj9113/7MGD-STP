@@ -35,6 +35,11 @@ export function canEditLab(role: string): boolean {
   return role === 'Admin' || role === 'Laboratory';
 }
 
+/** Can this role enter / correct the daily report of a department? Admin and that department's own staff (never Viewer). */
+export function canEditDept(role: string, dept: DeptSlug): boolean {
+  return role === 'Admin' || role === DEPT_SLUG_TO_ROLE[dept];
+}
+
 /** Can this role access the Admin panel? */
 export function canViewAdmin(role: string): boolean {
   return role === 'Admin';

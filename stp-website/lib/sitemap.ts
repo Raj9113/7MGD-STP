@@ -23,7 +23,7 @@ export const ACCESS_LABELS: Record<SiteMapAccess, string> = {
   public: 'Open to everyone',
   all: 'All signed-in users',
   department: 'Own department (Admin & Viewer see all)',
-  editors: 'Laboratory & Admin',
+  editors: 'Department staff & Admin',
   admin: 'Admin only',
 };
 
@@ -50,9 +50,12 @@ export const SITE_MAP: SiteMapSection[] = [
     title: 'Departments',
     note: 'Each user sees their own department; Admin and Viewer see all (Viewer is read-only).',
     entries: [
-      { label: 'Mechanical', href: '/dashboard/mechanical', icon: '⚙️', description: 'Mechanical department page.', access: 'department' },
-      { label: 'Electrical', href: '/dashboard/electrical', icon: '⚡', description: 'Electrical department page.', access: 'department' },
-      { label: 'Housekeeping', href: '/dashboard/housekeeping', icon: '🧹', description: 'Housekeeping department page.', access: 'department' },
+      { label: 'Mechanical', href: '/dashboard/mechanical', icon: '⚙️', description: 'Daily mechanical report: pumps, blowers, clarifiers, flow, dissolved oxygen and work orders.', access: 'department' },
+      { label: 'Mechanical daily entry', href: '/dashboard/mechanical/entry', icon: '📝', description: 'Form to enter or correct the day’s mechanical report.', access: 'editors' },
+      { label: 'Electrical', href: '/dashboard/electrical', icon: '⚡', description: 'Daily electrical report: power supply, energy, MCC panels, DG set, UPS and alarms.', access: 'department' },
+      { label: 'Electrical daily entry', href: '/dashboard/electrical/entry', icon: '📝', description: 'Form to enter or correct the day’s electrical report.', access: 'editors' },
+      { label: 'Housekeeping', href: '/dashboard/housekeeping', icon: '🧹', description: 'Daily housekeeping report: shift tasks, chemicals, sludge disposal, PPE and pest control.', access: 'department' },
+      { label: 'Housekeeping daily entry', href: '/dashboard/housekeeping/entry', icon: '📝', description: 'Form to enter or correct the day’s housekeeping report.', access: 'editors' },
       { label: 'Laboratory', href: '/dashboard/laboratory', icon: '🧪', description: 'Monthly lab results, effluent quality vs. limits, daily reports with sample photos and power use.', access: 'department' },
       { label: 'Laboratory daily entry', href: '/dashboard/laboratory/entry', icon: '📝', description: 'Form for the chemist and assistant to enter or correct a day’s readings, power reading and photographs.', access: 'editors' },
     ],

@@ -23,7 +23,10 @@ The repo contains two deployable parts:
 - **Invite-only onboarding** — visitors request access, an admin approves/rejects, the user receives a temporary password by email and must set a new one on first login.
 - **Role-based access control** (see below).
 - **Role-change requests** — users can ask an admin to move them to another department.
-- **Department pages** for Mechanical, Electrical, Housekeeping and Laboratory.
+- **Department pages** for Mechanical, Electrical, Housekeeping and Laboratory. The Mechanical / Electrical / Housekeeping pages show the daily report of any date (date selector, previous/next), flag what needs attention, and are filled from real daily entries (no placeholder data).
+- **Daily entry forms for Mechanical, Electrical and Housekeeping** — the department's own staff and Admin record each day: equipment status and readings, MCC panels, DG set and UPS, alarms, work orders, shift tasks, chemical stock, sludge disposal, PPE, pest control and remarks. Equipment lists are editable and carried forward from the previous report (open work orders and uncleared alarms too); readings are validated and highlighted as they are typed. All three forms are generated from one schema (`stp-website/lib/dept-report/schema.ts`).
+- **Overview tiles are real:** treated flow, effluent quality, BOD removal, energy used and items needing attention come from the latest lab and department reports, and each department card shows when it last reported.
+- **Daily plant report (PDF)** — Admin only. A button under the greeting on the Overview page: pick a particular date or a custom range (up to 31 days) and download one PDF with a chapter per day: summary, Laboratory (limits, photos, power), then the daily reports of Electrical, Mechanical and Housekeeping, and the day's portal activity. Items needing attention (faulty equipment, open high-priority work orders, active alarms, low chemical stock, values above limit) are flagged on the summary; a department that did not enter a report for a date says so.
 - **Laboratory downloads** — a *Download reports* panel on the Laboratory page: **Excel** for any month (one sheet in the lab workbook's own layout, with logos, merged headers, averages and the sign-off line) and **Word** daily reports for a chosen day, the whole month or custom dates (the lab's own daily page: limits table with red shading for values above the limit, the sample/OLMS photo frames, power table). Both are filled from templates cut out of the lab team's own files, so the look is theirs; photos can be left out.
 - **Laboratory daily entry form** — the chemist and assistant (role `Laboratory`) and Admin enter or correct a day's flow, analysis readings, energy-meter reading and the two photographs from a phone or PC. Out-of-limit values are flagged as they are typed, the meter "open" reading is pre-filled from the previous day, photos are shrunk before upload, and a strip shows which of the last 10 days are still missing. Saved to Supabase and shown on the Laboratory page immediately.
 - **Laboratory page** — month-by-month effluent quality from the lab team's Excel/Word reports: KPIs and removal efficiency, each parameter against its permissible limit, day-by-day and long-term trend charts, a daily readings table (out-of-limit values highlighted), a daily report browser — filter by month, pick a day (dropdown, chips, previous/next) and narrow it to days with photos or days above a limit — showing the limits table, the OLMS and inlet/outlet sample photos, and power consumption.
@@ -55,9 +58,12 @@ Also shown in the app on the login page ("View Site Map"); its data comes from [
 | `/dashboard` | Overview and camera preview | Signed-in |
 | `/dashboard/camera` | Live camera grid | Signed-in |
 | `/dashboard/request-role` | Request a role/department change | Signed-in (non-admin) |
-| `/dashboard/mechanical` | Mechanical department | Mechanical, Admin, Viewer |
-| `/dashboard/electrical` | Electrical department | Electrical, Admin, Viewer |
-| `/dashboard/housekeeping` | Housekeeping department | Housekeeping, Admin, Viewer |
+| `/dashboard/mechanical` | Mechanical daily report (`?date=YYYY-MM-DD`) | Mechanical, Admin, Viewer |
+| `/dashboard/mechanical/entry` | Mechanical daily entry form | Mechanical, Admin |
+| `/dashboard/electrical` | Electrical daily report (`?date=YYYY-MM-DD`) | Electrical, Admin, Viewer |
+| `/dashboard/electrical/entry` | Electrical daily entry form | Electrical, Admin |
+| `/dashboard/housekeeping` | Housekeeping daily report (`?date=YYYY-MM-DD`) | Housekeeping, Admin, Viewer |
+| `/dashboard/housekeeping/entry` | Housekeeping daily entry form | Housekeeping, Admin |
 | `/dashboard/laboratory` | Laboratory: lab results, daily reports, photos, power (`?month=YYYY-MM&day=YYYY-MM-DD&show=all\|photos\|exceed`) | Laboratory, Admin, Viewer |
 | `/dashboard/laboratory/entry` | Daily lab report entry form (`?date=YYYY-MM-DD` to edit a day) | Laboratory, Admin |
 | `/dashboard/admin` | User management, requests, activity log | Admin |
@@ -70,6 +76,7 @@ Also shown in the app on the login page ("View Site Map"); its data comes from [
 | `/api/admin/approve-registration` | Approve an access request, create the user and email a temporary password |
 | `/api/admin/reject-registration` | Reject an access request |
 | `/api/admin/approve-role` | Approve a role-change request |
+| `GET /api/reports/daily-pdf?from=YYYY-MM-DD&to=YYYY-MM-DD&photos=1` | The all-department daily report as a PDF, up to 31 days (Admin only) |
 | `GET /api/lab/export/excel?month=YYYY-MM` | The month as an Excel sheet in the lab workbook's layout (Laboratory, Admin, Viewer) |
 | `GET /api/lab/export/word?from=YYYY-MM-DD&to=YYYY-MM-DD&photos=1` | Word daily reports for the days in that period, up to 31 days (Laboratory, Admin, Viewer) |
 | `GET /api/lab/photo/<YYYY-MM>/<DD>-<olms\|sample>.<jpeg\|png\|webp>` | Lab photographs (private Supabase bucket `lab-photos`, then the file-based history), served only to signed-in users allowed to view the Laboratory page |
@@ -92,6 +99,9 @@ Server actions in `stp-website/app/actions/`: `registration`, `role-request`, `u
     │   ├── dashboard/        shell, sidebar, department pages (incl. laboratory/), camera, admin
     │   ├── actions/          server actions
     │   └── api/              camera-url + admin routes
+    ├── lib/daily-report/     builds the daily plant report PDF (pdf-lib)
+    ├── lib/dept-report/      the daily-report schema of each department (drives the form, validation, page and PDF), loaders
+    ├── templates/report/     the two logos used in the PDF header
     ├── templates/lab/        month-sheet-template.xlsx + daily-report-template.docx (cut from the lab team's own files)
     ├── lib/lab-export/       builds the Excel / Word downloads from those templates
     ├── supabase/             lab-entry.sql (one-time database setup for the daily entry form)
@@ -125,9 +135,11 @@ npm run dev                  # http://localhost:3000
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Outgoing email (invites, approvals) |
 | `CAMERA_HLS_URL` | Public URL of the camera relay (e.g. via Cloudflare Tunnel); server-side only |
 
-Supabase tables used: `profiles`, `registration_requests`, `role_requests`, `activity_logs`, and `lab_daily` (+ the private storage bucket `lab-photos`) for the Laboratory daily entry. The older schema is not stored in this repo; the lab one is in [`stp-website/supabase/lab-entry.sql`](stp-website/supabase/lab-entry.sql).
+Supabase tables used: `profiles`, `registration_requests`, `role_requests`, `activity_logs`, `dept_daily`, and `lab_daily` (+ the private storage bucket `lab-photos`) for the Laboratory daily entry. The older schema is not stored in this repo; `dept_daily` (Mechanical / Electrical / Housekeeping daily reports) is in [`stp-website/supabase/dept-entry.sql`](stp-website/supabase/dept-entry.sql) and the lab one in [`stp-website/supabase/lab-entry.sql`](stp-website/supabase/lab-entry.sql).
 
 **One-time setup for the Laboratory daily entry:** in the Supabase dashboard open *SQL Editor → New query*, paste the contents of `stp-website/supabase/lab-entry.sql` and run it. Until then the Laboratory page keeps working but saving shows a "not set up yet" message. Then run [`stp-website/supabase/add-laboratory-role.sql`](stp-website/supabase/add-laboratory-role.sql) the same way: `profiles.department` (and the request tables) have a CHECK rule that must be widened to accept `Laboratory`.
+
+**One-time setup for the department daily reports:** run [`stp-website/supabase/dept-entry.sql`](stp-website/supabase/dept-entry.sql) the same way. Until then the Mechanical / Electrical / Housekeeping pages show "no reports yet" and saving shows a "not set up yet" message.
 
 ### 2. Camera relay
 ```bash
@@ -173,6 +185,8 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Daily entry forms and real pages for Mechanical, Electrical and Housekeeping** added (`app/dashboard/dept/*`, `lib/dept-report/*`, `app/actions/dept-report.ts`, `supabase/dept-entry.sql`): replaces the placeholder values, which are gone. The daily PDF now draws these reports (no more SAMPLE DATA sections) and the Overview tiles and department cards are derived from real reports. Run `supabase/dept-entry.sql` once.
+- **Daily plant report PDF** added (Admin only, Overview page): `app/api/reports/daily-pdf`, `lib/daily-report/*`, new dependency `pdf-lib`; the sample data of the Mechanical, Electrical and Housekeeping pages moved to `lib/sample-data/` so the pages and the PDF share it.
 - **Laboratory downloads** added: Excel (month) and Word (day / month / custom dates) in the lab team's own formats (`app/api/lab/export/*`, `lib/lab-export/*`, `templates/lab/*`, new dependency `jszip`).
 - **Laboratory daily entry form** added (`/dashboard/laboratory/entry`, `app/actions/lab.ts`, `supabase/lab-entry.sql`): Laboratory/Admin can save a day's readings, power and photos; stored in Supabase and merged with the file-based history.
 - **Laboratory department** added: new `Laboratory` role, `/dashboard/laboratory` page (monthly summary, limit compliance, trends, daily readings, daily report with photos and power), data generated by `scripts/build-lab-data.py`. The `profiles.department` column in Supabase must accept the value `Laboratory` (check for a CHECK constraint or enum).
