@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import LoadingOverlay from '../LoadingOverlay';
 import { submitRoleRequest, type RoleRequestState } from '@/app/actions/role-request';
 import Link from 'next/link';
 
@@ -58,6 +59,7 @@ export default function RequestRolePage() {
         )}
 
         <form action={action} className="space-y-5">
+          <LoadingOverlay show={pending} text="Sending your request…" />
 
           {/* Requested Role */}
           <div>

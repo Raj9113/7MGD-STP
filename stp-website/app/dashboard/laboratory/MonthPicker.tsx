@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { navigate } from '@/lib/nav-pending';
 
 interface MonthPickerProps {
   months: { key: string; label: string }[];
@@ -28,7 +29,7 @@ export default function MonthPicker({ months, current, prev, next }: MonthPicker
       <select
         id="lab-month-select"
         value={current}
-        onChange={(e) => router.push(`?month=${e.target.value}`, { scroll: false })}
+        onChange={(e) => navigate(router, `?month=${e.target.value}`, { scroll: false })}
         aria-label="Select month"
         className="h-9 min-w-40 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-[#0062b8]"
       >

@@ -24,3 +24,17 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Navigation loader (app/dashboard/NavProgress.tsx) */
+@keyframes nav-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(300%); }
+}
+.nav-bar { animation: nav-slide 1.1s ease-in-out infinite; }
+
+/* The "Loading…" pill only appears if the page takes longer than a moment, so quick page changes don't flash it */
+@keyframes nav-pill-in {
+  from { opacity: 0; transform: translate(-50%, -6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+.nav-pill { opacity: 0; animation: nav-pill-in 0.2s ease-out 0.35s forwards; }

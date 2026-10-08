@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useActionState } from 'react';
+import LoadingOverlay from '../dashboard/LoadingOverlay';
 import { submitRegistrationRequest, type RegistrationRequestState } from '@/app/actions/registration';
 import Link from 'next/link';
 
@@ -70,6 +71,7 @@ export default function RequestAccessPage() {
           )}
 
           <form action={action} className="space-y-4">
+            <LoadingOverlay show={pending} text="Submitting your request…" />
 
             {/* Full Name */}
             <div>

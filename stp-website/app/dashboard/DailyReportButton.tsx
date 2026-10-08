@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { fetchFile, saveBlob } from '@/lib/download';
+import LoadingOverlay from './LoadingOverlay';
 
 type Mode = 'day' | 'range';
 
@@ -40,6 +41,7 @@ export default function DailyReportButton({ today }: { today: string }) {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" aria-label="Daily report">
+      <LoadingOverlay show={busy} text="Preparing the daily report PDF… this can take a few seconds" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-gray-800">📄 Daily plant report</p>

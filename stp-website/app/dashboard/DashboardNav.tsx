@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import LoadingOverlay from './LoadingOverlay';
 
 const DEPT_COLORS: Record<string, string> = {
   Mechanical: 'bg-orange-100 text-orange-800',
@@ -42,6 +43,7 @@ export default function DashboardNav({
 
   return (
     <nav className="bg-[#0062b8] shadow-md border-b-2 border-[#ffcc00]">
+      <LoadingOverlay show={loggingOut} text="Signing out…" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left: Hamburger (mobile) + Logo + Title */}
         <div className="flex items-center gap-3">

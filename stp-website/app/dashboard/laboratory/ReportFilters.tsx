@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { navigate } from '@/lib/nav-pending';
 
 export type ShowFilter = 'all' | 'photos' | 'exceed';
 
@@ -60,7 +61,7 @@ export default function ReportFilters({ month, show, counts, selected, days }: R
             aria-label="Select a day"
             value={selected ?? ''}
             disabled={days.length === 0}
-            onChange={(e) => router.push(href(month, e.target.value, show))}
+            onChange={(e) => navigate(router, href(month, e.target.value, show))}
             className="h-9 min-w-48 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-[#0062b8] disabled:bg-gray-50"
           >
             {days.length === 0 && <option value="">No days</option>}

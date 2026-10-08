@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import DashboardNav from './DashboardNav';
 import DashboardSidebar from './DashboardSidebar';
+import NavProgress from './NavProgress';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -23,6 +24,9 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Suspense fallback={null}>
+        <NavProgress />
+      </Suspense>
       <DashboardNav
         email={email}
         fullName={fullName}

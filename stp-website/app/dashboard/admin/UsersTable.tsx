@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import LoadingOverlay from '../LoadingOverlay';
 import { updateUserDepartment, deleteUser, type UpdateDeptState, type DeleteUserState } from '@/app/actions/users';
 
 const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer', 'Admin'];
@@ -84,6 +85,7 @@ function UserRow({ profile, index }: { profile: Profile; index: number }) {
         <tr className="bg-blue-50">
           <td colSpan={6} className="px-5 py-3">
             <form action={updateAction} className="flex items-center gap-3 flex-wrap">
+              <LoadingOverlay show={updatePending} text="Updating the department…" />
               <input type="hidden" name="userId" value={profile.id} />
               <span className="text-sm text-gray-600 font-medium">
                 Change <strong>{profile.full_name || 'this user'}</strong>&apos;s role to:
@@ -128,6 +130,7 @@ function UserRow({ profile, index }: { profile: Profile; index: number }) {
         <tr className="bg-red-50">
           <td colSpan={6} className="px-5 py-3">
             <form action={deleteAction} className="flex items-center gap-3 flex-wrap">
+              <LoadingOverlay show={deletePending} text="Deleting the user…" />
               <input type="hidden" name="userId" value={profile.id} />
               <span className="text-sm text-red-700 font-medium">
                 ⚠️ Permanently delete <strong>{profile.full_name || profile.id}</strong>? This cannot be undone.

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { startTransition, useActionState, useEffect, useState } from 'react';
 import { saveDeptReport, type SaveDeptState } from '@/app/actions/dept-report';
 import { errorKey } from '@/lib/dept-report/validate';
+import { navigate } from '@/lib/nav-pending';
+import LoadingOverlay from '../LoadingOverlay';
 import {
   REMARKS_MAX, SCHEMAS, asRow, asRows, rowTitle, statusTone,
   type Cell, type DeptData, type DeptSlug, type Field, type Level, type Row, type Section,
@@ -109,7 +111,7 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
   function go(d: string) {
     if (!d || d > today) return;
     if (dirty && !window.confirm('You have unsaved changes on this form. Discard them and open another date?')) return;
-    router.replace(`?date=${d}`);
+    navigate(router, `?date=${d}`, { replace: true });
   }
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -129,6 +131,7 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
+      <LoadingOverlay show={working} text={`Saving ${schema.label.toLowerCase()} report…`} />
       {state.message && (
         <div role="status" className={`rounded-xl border p-4 text-sm ${state.success ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-700'}`}>
           <p className="font-semibold">{state.success ? '✅' : '⚠️'} {state.message}</p>

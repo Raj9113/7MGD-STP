@@ -185,6 +185,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Loading feedback** added: a progress bar and "Loading…" pill appear the moment any link or page dropdown is used (`app/dashboard/NavProgress.tsx`, `lib/nav-pending.ts`), `app/dashboard/loading.tsx` shows a skeleton while a page loads, and a full-screen overlay (`app/dashboard/LoadingOverlay.tsx`) covers saving reports, downloads, sign-out and the admin / request forms.
 - **Daily entry forms and real pages for Mechanical, Electrical and Housekeeping** added (`app/dashboard/dept/*`, `lib/dept-report/*`, `app/actions/dept-report.ts`, `supabase/dept-entry.sql`): replaces the placeholder values, which are gone. The daily PDF now draws these reports (no more SAMPLE DATA sections) and the Overview tiles and department cards are derived from real reports. Run `supabase/dept-entry.sql` once.
 - **Daily plant report PDF** added (Admin only, Overview page): `app/api/reports/daily-pdf`, `lib/daily-report/*`, new dependency `pdf-lib`; the sample data of the Mechanical, Electrical and Housekeeping pages moved to `lib/sample-data/` so the pages and the PDF share it.
 - **Laboratory downloads** added: Excel (month) and Word (day / month / custom dates) in the lab team's own formats (`app/api/lab/export/*`, `lib/lab-export/*`, `templates/lab/*`, new dependency `jszip`).

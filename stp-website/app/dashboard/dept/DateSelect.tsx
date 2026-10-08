@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { navigate } from '@/lib/nav-pending';
 
 interface DateSelectProps {
   base: string;
@@ -32,7 +33,7 @@ export default function DateSelect({ base, dates, current }: DateSelectProps) {
         id="dept-date-select"
         aria-label="Choose report date"
         value={current ?? ''}
-        onChange={(e) => router.push(`${base}?date=${e.target.value}`)}
+        onChange={(e) => navigate(router, `${base}?date=${e.target.value}`)}
         className="h-9 min-w-48 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 outline-none focus:ring-2 focus:ring-[#0062b8]"
       >
         {dates.map((d) => <option key={d} value={d}>{label(d)}</option>)}

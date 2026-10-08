@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { startTransition, useActionState, useEffect, useMemo, useState } from 'react';
 import { saveLabEntry, type SaveLabState } from '@/app/actions/lab';
+import { navigate } from '@/lib/nav-pending';
+import LoadingOverlay from '../../LoadingOverlay';
 import {
   DEFAULT_MULTIPLIER, ENTRY_FIELDS, MAX_PHOTO_BYTES, PHOTO_KINDS, PHOTO_LABEL, fieldName, type PhotoKind,
 } from '../entry-fields';
@@ -121,6 +123,7 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
 
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
+      <LoadingOverlay show={working} text="Saving laboratory report and photos…" />
       {/* Result */}
       {state.message && (
         <div
@@ -149,7 +152,7 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
               type="date"
               value={date}
               max={today}
-              onChange={(e) => e.target.value && router.replace(`?date=${e.target.value}`)}
+              onChange={(e) => e.target.value && navigate(router, `?date=${e.target.value}`, { replace: true })}
               className={`${inputCls} mt-1 w-44 border-gray-200 font-semibold`}
             />
             {err('date') && <p className="mt-1 text-xs text-red-600">{err('date')}</p>}

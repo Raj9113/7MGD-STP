@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import LoadingOverlay from '../LoadingOverlay';
 import { inviteUser, type InviteUserState } from '@/app/actions/users';
 
 const DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Viewer', 'Admin'];
@@ -20,6 +21,7 @@ export default function InviteUserForm() {
       </div>
 
       <form action={formAction} className="p-6">
+        <LoadingOverlay show={isPending} text="Sending the invitation…" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Full Name */}
           <div>
