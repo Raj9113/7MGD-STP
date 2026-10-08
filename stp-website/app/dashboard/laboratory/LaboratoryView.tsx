@@ -1,6 +1,7 @@
 import { BarChart, LineChart } from './Charts';
 import DailyReport from './DailyReport';
 import DailyTable from './DailyTable';
+import ExportPanel from './ExportPanel';
 import MonthPicker from './MonthPicker';
 import Link from 'next/link';
 import ReportFilters, { type ShowFilter } from './ReportFilters';
@@ -115,6 +116,17 @@ export default async function LaboratoryView({
             <code className="rounded bg-amber-100 px-1">supabase/lab-entry.sql</code> once in the Supabase SQL editor. Existing reports keep working.
           </p>
         </div>
+      )}
+
+      {days.length > 0 && (
+        <ExportPanel
+          key={`${month.key}-${day?.date}`}
+          month={month.key}
+          monthLabel={monthLabel(month.key)}
+          selectedDay={day?.date}
+          firstDate={data.months.find((m) => m.days.length)!.days[0].date}
+          lastDate={[...data.months].reverse().find((m) => m.days.length)!.days.at(-1)!.date}
+        />
       )}
 
       {/* Month summary */}

@@ -1,11 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { canViewDept } from '@/lib/access';
 import { NextResponse } from 'next/server';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-
-const TYPES: Record<string, string> = { jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
+import { PHOTO_FILE, PHOTO_TYPES, readLabPhoto } from '@/lib/lab-export/photos';
 
 /**
  * GET /api/lab/photo/2026-09/15-olms.jpeg
@@ -30,23 +26,11 @@ export async function GET(
 
   // Strict whitelist: no path separators or dots can reach storage or the filesystem
   const { month, file } = await params;
-  const match = /^\d{2}-(olms|sample)\.(jpeg|png|webp)$/.exec(file);
-  if (!/^\d{4}-\d{2}$/.test(month) || !match) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  const headers = { 'Content-Type': TYPES[match[2]], 'Cache-Control': 'private, max-age=3600' };
+  const match = PHOTO_FILE.exec(file);
+  const bytes = match ? await readLabPhoto(month, file) : null;
+  if (!match || !bytes) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  try {
-    const { data } = await createAdminClient().storage.from('lab-photos').download(`${month}/${file}`);
-    if (data) return new NextResponse(new Uint8Array(await data.arrayBuffer()), { headers });
-  } catch {
-    // storage not configured or file not there: fall through to the file-based history
-  }
-
-  try {
-    const bytes = await readFile(path.join(process.cwd(), 'data', 'lab', 'photos', month, file));
-    return new NextResponse(new Uint8Array(bytes), { headers });
-  } catch {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  return new NextResponse(new Uint8Array(bytes), {
+    headers: { 'Content-Type': PHOTO_TYPES[match[2]], 'Cache-Control': 'private, max-age=3600' },
+  });
 }

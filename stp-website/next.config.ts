@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // The lab photo route reads these files at runtime; make sure they are bundled with it on Vercel.
   outputFileTracingIncludes: {
     "/api/lab/photo/**": ["./data/lab/photos/**/*"],
+    // Excel / Word downloads are filled from templates cut from the lab team's own files (+ the photos for Word)
+    "/api/lab/export/**": ["./templates/lab/**/*", "./data/lab/photos/**/*"],
   },
 };
 

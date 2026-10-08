@@ -24,6 +24,7 @@ The repo contains two deployable parts:
 - **Role-based access control** (see below).
 - **Role-change requests** — users can ask an admin to move them to another department.
 - **Department pages** for Mechanical, Electrical, Housekeeping and Laboratory.
+- **Laboratory downloads** — a *Download reports* panel on the Laboratory page: **Excel** for any month (one sheet in the lab workbook's own layout, with logos, merged headers, averages and the sign-off line) and **Word** daily reports for a chosen day, the whole month or custom dates (the lab's own daily page: limits table with red shading for values above the limit, the sample/OLMS photo frames, power table). Both are filled from templates cut out of the lab team's own files, so the look is theirs; photos can be left out.
 - **Laboratory daily entry form** — the chemist and assistant (role `Laboratory`) and Admin enter or correct a day's flow, analysis readings, energy-meter reading and the two photographs from a phone or PC. Out-of-limit values are flagged as they are typed, the meter "open" reading is pre-filled from the previous day, photos are shrunk before upload, and a strip shows which of the last 10 days are still missing. Saved to Supabase and shown on the Laboratory page immediately.
 - **Laboratory page** — month-by-month effluent quality from the lab team's Excel/Word reports: KPIs and removal efficiency, each parameter against its permissible limit, day-by-day and long-term trend charts, a daily readings table (out-of-limit values highlighted), a daily report browser — filter by month, pick a day (dropdown, chips, previous/next) and narrow it to days with photos or days above a limit — showing the limits table, the OLMS and inlet/outlet sample photos, and power consumption.
 - **Admin panel** — invite users, change departments, delete users, review pending requests, view and export the **activity log** to Excel.
@@ -69,6 +70,8 @@ Also shown in the app on the login page ("View Site Map"); its data comes from [
 | `/api/admin/approve-registration` | Approve an access request, create the user and email a temporary password |
 | `/api/admin/reject-registration` | Reject an access request |
 | `/api/admin/approve-role` | Approve a role-change request |
+| `GET /api/lab/export/excel?month=YYYY-MM` | The month as an Excel sheet in the lab workbook's layout (Laboratory, Admin, Viewer) |
+| `GET /api/lab/export/word?from=YYYY-MM-DD&to=YYYY-MM-DD&photos=1` | Word daily reports for the days in that period, up to 31 days (Laboratory, Admin, Viewer) |
 | `GET /api/lab/photo/<YYYY-MM>/<DD>-<olms\|sample>.<jpeg\|png\|webp>` | Lab photographs (private Supabase bucket `lab-photos`, then the file-based history), served only to signed-in users allowed to view the Laboratory page |
 
 Server actions in `stp-website/app/actions/`: `registration`, `role-request`, `users` (invite / update department / delete), `logs` (query and Excel export), `lab` (save a daily lab report + photos).
@@ -89,6 +92,8 @@ Server actions in `stp-website/app/actions/`: `registration`, `role-request`, `u
     │   ├── dashboard/        shell, sidebar, department pages (incl. laboratory/), camera, admin
     │   ├── actions/          server actions
     │   └── api/              camera-url + admin routes
+    ├── templates/lab/        month-sheet-template.xlsx + daily-report-template.docx (cut from the lab team's own files)
+    ├── lib/lab-export/       builds the Excel / Word downloads from those templates
     ├── supabase/             lab-entry.sql (one-time database setup for the daily entry form)
     ├── data/lab/             lab-data.json + photos/ (generated from the lab Excel/Word files; photos served only to signed-in users)
     ├── scripts/              build-lab-data.py (refreshes the Laboratory data)
@@ -147,6 +152,10 @@ Endpoints: `/stream/stream.m3u8` (HLS) and `/health`. FFmpeg restarts automatica
 
 Days entered through the form live in Supabase (`lab_daily`) and are merged on top of the history below; a day entered on the portal replaces that day's Excel values.
 
+#### Download templates
+
+The Excel and Word downloads are generated from `stp-website/templates/lab/`, which holds one month sheet and one daily page cut out of the lab team's own files (`scripts/build-lab-templates.py "<workbook>.xlsx" "<month report>.docx"`). Only re-run it if the team changes the layout of their files. A whole month of Word pages with photos is about 5.6 MB; the server re-encodes the photos smaller when needed so the download stays under Vercel's 4.5 MB response limit.
+
 #### Loading history from the Excel/Word files
 
 The Laboratory page reads `stp-website/data/lab/lab-data.json`, which is generated from the lab team's files (no database table yet). After the Excel workbook or a monthly Word report changes, run from `stp-website/` (Python 3, standard library only):
@@ -164,6 +173,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Laboratory downloads** added: Excel (month) and Word (day / month / custom dates) in the lab team's own formats (`app/api/lab/export/*`, `lib/lab-export/*`, `templates/lab/*`, new dependency `jszip`).
 - **Laboratory daily entry form** added (`/dashboard/laboratory/entry`, `app/actions/lab.ts`, `supabase/lab-entry.sql`): Laboratory/Admin can save a day's readings, power and photos; stored in Supabase and merged with the file-based history.
 - **Laboratory department** added: new `Laboratory` role, `/dashboard/laboratory` page (monthly summary, limit compliance, trends, daily readings, daily report with photos and power), data generated by `scripts/build-lab-data.py`. The `profiles.department` column in Supabase must accept the value `Laboratory` (check for a CHECK constraint or enum).
 - **Site map** added to the login page; root README written.
