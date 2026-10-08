@@ -34,7 +34,7 @@ export default function SiteMap() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-white rounded-2xl border-2 border-[#ffcc00] shadow-2xl text-left"
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto overflow-x-hidden bg-white rounded-2xl border-2 border-[#ffcc00] shadow-2xl text-left"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="sticky top-0 flex items-center justify-between bg-[#0062b8] px-6 py-4 border-b-2 border-[#ffcc00]">
@@ -56,15 +56,17 @@ export default function SiteMap() {
                   <p className="text-xs text-gray-500 mb-2">{section.note}</p>
                   <ul className="space-y-2">
                     {section.entries.map((e) => (
-                      <li key={e.href} className="flex items-start gap-3 rounded-lg border border-gray-100 p-3">
-                        <span className="text-xl leading-none">{e.icon}</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-gray-800">
-                            {e.label} <code className="ml-1 text-xs font-normal text-gray-400">{e.href}</code>
-                          </p>
-                          <p className="text-xs text-gray-500">{e.description}</p>
+                      <li key={e.href} className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 rounded-lg border border-gray-100 p-3">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          <span className="text-xl leading-none">{e.icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-gray-800 wrap-break-word">
+                              {e.label} <code className="block sm:inline sm:ml-1 text-xs font-normal text-gray-400 break-all">{e.href}</code>
+                            </p>
+                            <p className="text-xs text-gray-500">{e.description}</p>
+                          </div>
                         </div>
-                        <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${BADGE[e.access]}`}>
+                        <span className={`self-start ml-8 sm:ml-0 sm:shrink-0 sm:max-w-40 text-[10px] leading-snug font-bold px-2 py-0.5 rounded-xl ${BADGE[e.access]}`}>
                           {ACCESS_LABELS[e.access]}
                         </span>
                       </li>
