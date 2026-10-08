@@ -16,7 +16,7 @@ export default async function LabEntryPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase.from('profiles').select('department').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('department, full_name').eq('id', user.id).single();
   if (!canEditLab(profile?.department ?? 'Unknown')) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-xl p-8 text-center text-red-800 max-w-md mx-auto mt-12">
@@ -111,6 +111,8 @@ export default async function LabEntryPage({
         photos={photos}
         meta={meta}
         recent={recent}
+        userName={profile?.full_name || user.email || 'Unknown'}
+        isAdmin={profile?.department === 'Admin'}
       />
     </div>
   );

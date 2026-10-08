@@ -21,6 +21,9 @@ interface EntryFormProps {
   photos: Partial<Record<PhotoKind, string>>;
   meta: EntryMeta;
   recent: RecentDay[];
+  /** the logged-in user (recorded on the report automatically) */
+  userName: string;
+  isAdmin: boolean;
 }
 
 const INIT: SaveLabState = { success: false, message: '' };
@@ -61,7 +64,7 @@ function fmtWhen(iso: string) {
   return new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 }
 
-export default function EntryForm({ date, today, defaults, limits, photos, meta, recent }: EntryFormProps) {
+export default function EntryForm({ date, today, defaults, limits, photos, meta, recent, userName, isAdmin }: EntryFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveLabEntry, INIT);
   const [vals, setVals] = useState<Record<string, string>>(defaults);
@@ -156,6 +159,14 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
               className={`${inputCls} mt-1 w-44 border-gray-200 font-semibold`}
             />
             {err('date') && <p className="mt-1 text-xs text-red-600">{err('date')}</p>}
+          </div>
+          <div>
+            <p className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Prepared by</p>
+            <div className="mt-1 flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-800" title="Your login name is recorded on the report automatically">
+              <span aria-hidden>👤</span>
+              <span className="truncate">{userName}</span>
+              {isAdmin && <span className="rounded-full bg-purple-100 px-2 text-xs font-bold text-purple-700">Admin</span>}
+            </div>
           </div>
           <p className="max-w-md pb-1 text-sm text-gray-500">
             {meta.kind === 'live' && <>Already entered on the portal{meta.by ? ` by ${meta.by}` : ''} · {fmtWhen(meta.at)}. Saving will update it.</>}

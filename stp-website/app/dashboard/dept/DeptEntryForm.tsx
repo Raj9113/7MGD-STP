@@ -8,7 +8,7 @@ import { errorKey } from '@/lib/dept-report/validate';
 import { navigate } from '@/lib/nav-pending';
 import LoadingOverlay from '../LoadingOverlay';
 import {
-  REMARKS_MAX, SCHEMAS, asRow, asRows, rowTitle, statusTone,
+  REMARKS_MAX, SCHEMAS, asRow, asRows, istHour, rowTitle, runningShifts, statusTone,
   type Cell, type DeptData, type DeptSlug, type Field, type Level, type Row, type Section,
 } from '@/lib/dept-report/schema';
 
@@ -22,6 +22,9 @@ interface Props {
   initial: DeptData;
   meta: EntryMeta;
   recent: RecentDay[];
+  /** the logged-in user's name, and whether they are Admin (Admin types person names; staff get their own login name) */
+  userName: string;
+  isAdmin: boolean;
 }
 
 type Form = Record<string, Record<string, string> | Record<string, string>[] | string>;
@@ -84,7 +87,7 @@ function Input({ f, value, onChange, error, warn, id }: { f: Field; value: strin
   );
 }
 
-export default function DeptEntryForm({ dept, date, today, initial, meta, recent }: Props) {
+export default function DeptEntryForm({ dept, date, today, initial, meta, recent, userName, isAdmin }: Props) {
   const schema = SCHEMAS[dept];
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveDeptReport, INIT);
@@ -93,6 +96,11 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
   const [version, setVersion] = useState(0);
   const [submittedVersion, setSubmittedVersion] = useState(0);
   const [busy, setBusy] = useState(false);
+  // Staff stamp their own login name on one shift's supervisor box. When shifts overlap (General runs inside Morning and
+  // Evening) they say which one they are supervising; the server checks the choice against the clock.
+  const [hour] = useState(() => istHour());
+  const running = !isAdmin ? runningShifts(schema, hour) : [];
+  const [myShift, setMyShift] = useState<string>(running.length === 1 ? running[0].key : '');
 
   useEffect(() => {
     if (state.success) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -122,6 +130,7 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
     fd.set('dept', dept);
     fd.set('date', date);
     fd.set('payload', JSON.stringify(form));
+    fd.set('shift', myShift);
     startTransition(async () => { await formAction(fd); setBusy(false); });
   }
 
@@ -155,6 +164,14 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
             <input id="dept-entry-date" type="date" value={date} max={today} onChange={(e) => go(e.target.value)} className={`${inputCls} mt-1 w-44 border-gray-200 font-semibold`} />
             {err('date') && <p className="mt-1 text-xs text-red-600">{err('date')}</p>}
           </div>
+          <div>
+            <p className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Prepared by</p>
+            <div className="mt-1 flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-800" title="Your login name is recorded on the report automatically">
+              <span aria-hidden>👤</span>
+              <span className="truncate">{userName}</span>
+              {isAdmin && <span className="rounded-full bg-purple-100 px-2 text-xs font-bold text-purple-700">Admin</span>}
+            </div>
+          </div>
           <p className="max-w-lg pb-1 text-sm text-gray-500">
             {meta.kind === 'existing' && <>Already entered{meta.by ? ` by ${meta.by}` : ''} · {when(meta.at)}. Saving will update it.</>}
             {meta.kind === 'carried' && <>New report. Equipment, names and still-open items are carried over from the report of <b>{meta.from.split('-').reverse().join('-')}</b>; fill in today’s readings.</>}
@@ -178,6 +195,27 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
         </div>
       </section>
 
+      {running.length > 1 && (
+        <section className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm" aria-label="Your shift">
+          <p className="text-sm font-semibold text-blue-900">Which shift are you supervising right now?</p>
+          <p className="mt-0.5 text-xs text-blue-700">More than one shift is running at this hour. Your name ({userName}) goes on the supervisor box of the shift you choose.</p>
+          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Choose your shift">
+            {running.map((r) => (
+              <button
+                key={r.key}
+                type="button"
+                role="radio"
+                aria-checked={myShift === r.key}
+                onClick={() => setMyShift(r.key)}
+                className={`h-10 rounded-lg border px-4 text-sm font-semibold transition-colors ${myShift === r.key ? 'border-[#0062b8] bg-[#0062b8] text-white' : 'border-blue-200 bg-white text-blue-800 hover:border-[#0062b8]'}`}
+              >
+                {r.icon} {r.title.replace(/ \(.*\)/, '')} <span className="font-normal opacity-80">{r.title.match(/\((.*)\)/)?.[1]}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {schema.sections.map((sec) => (
         <section key={sec.key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-500">{sec.icon} {sec.title}</h3>
@@ -187,6 +225,28 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
               {sec.fields.map((f) => {
                 const row = form[sec.key] as Record<string, string>;
+                // A person's name: staff cannot type it. It is their own login name on the shift they supervise (or the name saved earlier)
+                if (f.loginName && !isAdmin) {
+                  const saved = toStr(asRow(initial[sec.key])[f.key]);
+                  const mine = !saved && sec.key === myShift && running.some((r) => r.key === sec.key);
+                  const name = saved || (mine ? userName : '');
+                  const choosing = !saved && running.length > 1 && !myShift && running.some((r) => r.key === sec.key);
+                  return (
+                    <div key={f.key}>
+                      <p className="block text-xs font-medium text-gray-600">{f.label}</p>
+                      <div className="mt-1 flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-gray-100 px-2.5 text-sm text-gray-800" title="Filled in from your login">
+                        <span aria-hidden>🔒</span>
+                        <span className="truncate font-semibold">{name || '—'}</span>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {saved ? (saved === userName ? 'Your name, from your login' : 'Saved earlier by the shift supervisor')
+                          : mine ? (state.success ? 'Saved with your name' : 'Will be filled with your name when you save')
+                          : choosing ? 'Choose your shift above to fill this'
+                          : 'Filled in by that shift\'s supervisor'}
+                      </p>
+                    </div>
+                  );
+                }
                 return <Input key={f.key} id={`${sec.key}.${f.key}`} f={f} value={row[f.key] ?? ''} onChange={(v) => setField(sec, f.key, v)} error={err(errorKey(sec.key, f.key))} warn={level(f, row)} />;
               })}
             </div>

@@ -32,6 +32,8 @@ export interface Field {
   bar?: boolean;
   /** Kept when tomorrow's blank form is started from the last report (names, ids, capacities...) */
   carry?: boolean;
+  /** A person's name: department staff get their own login name (they cannot type it); only Admin types it. See applyLoginNames. */
+  loginName?: boolean;
   /** Highlights a value (red / amber) in the form and the views */
   warn?: (v: number | string | undefined, row: Row) => Level;
 }
@@ -49,6 +51,8 @@ export interface Section {
   addLabel?: string;
   /** How the department page draws it */
   view?: 'stats' | 'cards' | 'table';
+  /** fields: the shift this section belongs to (India hours, from inclusive to exclusive); login names are only stamped during it */
+  shift?: { from: number; to: number };
   /** table: what tomorrow's blank form starts from: only the `carry` columns (default), or whole rows that are still open */
   carryMode?: 'columns' | 'open-rows';
   /** table (open-rows): a row counts as finished when this column holds one of these values */
@@ -257,7 +261,9 @@ export const HOUSEKEEPING: DeptSchema = {
   blurb: 'Cleaning schedule, chemicals, sludge disposal, PPE and pest control',
   accent: { ring: 'border-green-200', text: 'text-green-700', bg: 'bg-green-50', solid: 'bg-green-600' },
   sections: [
-    { key: 'morning', title: 'Morning shift (06:00-14:00)', icon: '🌅', kind: 'fields', view: 'stats', fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text' }] },
+    // Shifts: Morning 07-15, General 09-17 (office / general staff), Evening 15-23, Night 23-07 (India time).
+    // Each has a supervisor (a `loginName` field: staff cannot type it, see applyLoginNames) and its tasks.
+    { key: 'morning', title: 'Morning shift (07:00-15:00)', icon: '🌅', kind: 'fields', view: 'stats', shift: { from: 7, to: 15 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
     {
       key: 'morning_tasks', title: 'Morning shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields,
       seed: [
@@ -266,7 +272,9 @@ export const HOUSEKEEPING: DeptSchema = {
         { area: 'Control Room', task: 'Cleaning & AC Filter' }, { area: 'Laboratory', task: 'Bench Cleaning & Waste Disposal' },
       ],
     },
-    { key: 'evening', title: 'Evening shift (14:00-22:00)', icon: '🌇', kind: 'fields', view: 'stats', fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text' }] },
+    { key: 'general', title: 'General shift (09:00-17:00)', icon: '🏢', kind: 'fields', view: 'stats', shift: { from: 9, to: 17 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
+    { key: 'general_tasks', title: 'General shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields },
+    { key: 'evening', title: 'Evening shift (15:00-23:00)', icon: '🌇', kind: 'fields', view: 'stats', shift: { from: 15, to: 23 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
     {
       key: 'evening_tasks', title: 'Evening shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields,
       seed: [
@@ -274,6 +282,8 @@ export const HOUSEKEEPING: DeptSchema = {
         { area: 'Toilet Blocks (Staff)', task: 'Cleaning & Disinfection' }, { area: 'Plant Boundary & Roads', task: 'Sweeping' },
       ],
     },
+    { key: 'night', title: 'Night shift (23:00-07:00)', icon: '🌙', kind: 'fields', view: 'stats', shift: { from: 23, to: 7 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
+    { key: 'night_tasks', title: 'Night shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields },
     {
       key: 'chemicals', title: 'Chemical stock', icon: '🧪', kind: 'table', view: 'cards', addLabel: 'Add chemical', titleKeys: ['name'],
       fields: [
@@ -380,6 +390,42 @@ export function startingData(schema: DeptSchema, existing: DeptData | null, prev
         }
       }
       out[sec.key] = prev ? carried : (sec.seed ?? []).map((r) => ({ ...r }));
+    }
+  }
+  return out;
+}
+
+/** True when `hour` (0-23, India time) falls inside the section's shift (a shift may wrap past midnight); sections without a shift always apply. */
+export const inShift = (sec: Section, hour: number) => !sec.shift || (sec.shift.from < sec.shift.to ? hour >= sec.shift.from && hour < sec.shift.to : hour >= sec.shift.from || hour < sec.shift.to);
+
+/** The current hour in India (the plant's timezone) */
+export const istHour = (now = Date.now()) => new Date(now + 5.5 * 3600 * 1000).getUTCHours();
+
+/** The shifts (with a login-name field) that are running at `hour`. Shifts can overlap, e.g. General runs inside Morning and Evening. */
+export const runningShifts = (schema: DeptSchema, hour: number): Section[] =>
+  schema.sections.filter((s) => s.kind === 'fields' && s.shift && s.fields.some((f) => f.loginName) && inShift(s, hour));
+
+/**
+ * Department staff do not type person names that are marked `loginName`: the name of the logged-in user is stamped
+ * instead, on ONE shift's supervisor box: the shift they chose (it must be running now), or the only shift running.
+ * When several shifts overlap and none was chosen, nothing is stamped. A name already saved on the report is kept, so one
+ * user cannot overwrite another shift's supervisor. Admin types these names freely (do not call this for Admin).
+ */
+export function applyLoginNames(schema: DeptSchema, data: DeptData, existing: DeptData | null, who: string, hour: number, chosen?: string | null): DeptData {
+  const running = runningShifts(schema, hour);
+  const target = chosen && running.some((s) => s.key === chosen) ? chosen : running.length === 1 ? running[0].key : null;
+  const out: DeptData = { ...data };
+  for (const sec of schema.sections) {
+    if (sec.kind !== 'fields') continue;
+    for (const f of sec.fields) {
+      if (!f.loginName) continue;
+      const saved = asRow(existing?.[sec.key])[f.key];
+      const value: Cell | undefined = saved !== undefined ? saved : !sec.shift || sec.key === target ? who : undefined;
+      const row: Row = { ...asRow(out[sec.key]) };
+      if (value !== undefined) row[f.key] = value;
+      else delete row[f.key];
+      if (Object.keys(row).length) out[sec.key] = row;
+      else delete out[sec.key];
     }
   }
   return out;

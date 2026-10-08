@@ -6,7 +6,7 @@ import { canEditDept } from '@/lib/access';
 import { logActivity } from '@/lib/supabase/logger';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { DEPT_SLUGS, SCHEMAS, type DeptSlug } from '@/lib/dept-report/schema';
+import { DEPT_SLUGS, SCHEMAS, applyLoginNames, istHour, type DeptData, type DeptSlug } from '@/lib/dept-report/schema';
 import { parseReport } from '@/lib/dept-report/validate';
 import { isMissingTable } from '@/lib/dept-report/load';
 import { todayIST } from '@/app/dashboard/laboratory/entry-fields';
@@ -49,7 +49,7 @@ export async function saveDeptReport(_prev: SaveDeptState, formData: FormData): 
     if (!parsed.ok) return { success: false, message: 'Please correct the highlighted fields.', errors: parsed.errors };
 
     const admin = createAdminClient();
-    const { data: existing, error: readErr } = await admin.from('dept_daily').select('created_by, created_by_name').eq('dept', dept).eq('date', date).maybeSingle();
+    const { data: existing, error: readErr } = await admin.from('dept_daily').select('created_by, created_by_name, data').eq('dept', dept).eq('date', date).maybeSingle();
     if (readErr) {
       return {
         success: false,
@@ -60,9 +60,15 @@ export async function saveDeptReport(_prev: SaveDeptState, formData: FormData): 
     }
 
     const who = profile?.full_name || user.email || 'Unknown';
+
+    // Person names (e.g. shift supervisor): department staff get their own login name, only Admin types them
+    const data = profile?.department === 'Admin'
+      ? parsed.data
+      : applyLoginNames(SCHEMAS[dept], parsed.data, (existing?.data as DeptData | null) ?? null, who, istHour(), String(formData.get('shift') ?? '') || null);
+    if (Object.keys(data).length === 0) return { success: false, message: 'Enter at least one value before saving.', errors: { form: 'Enter at least one value before saving.' } };
     const { error: saveErr } = await admin.from('dept_daily').upsert(
       {
-        dept, date, data: parsed.data,
+        dept, date, data,
         created_by: existing?.created_by ?? user.id, created_by_name: existing?.created_by_name ?? who,
         updated_by: user.id, updated_by_name: who, updated_at: new Date().toISOString(),
       },

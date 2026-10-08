@@ -15,7 +15,7 @@ export default async function DeptEntryPage({ dept, searchParams }: { dept: Dept
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
-  const { data: profile } = await supabase.from('profiles').select('department').eq('id', user.id).single();
+  const { data: profile } = await supabase.from('profiles').select('department, full_name').eq('id', user.id).single();
 
   if (!canEditDept(profile?.department ?? 'Unknown', dept)) {
     return (
@@ -35,6 +35,8 @@ export default async function DeptEntryPage({ dept, searchParams }: { dept: Dept
 
   const [{ value: report, setupNeeded }, { value: previous }, { value: dates }] = await Promise.all([loadReport(dept, date), loadPrevious(dept, date), loadDates(dept)]);
 
+  const userName = profile?.full_name || user.email || 'Unknown';
+  const isAdmin = profile?.department === 'Admin';
   const initial = startingData(schema, report?.data ?? null, previous?.data ?? null);
   const meta: EntryMeta = report ? { kind: 'existing', by: report.updated_by_name, at: report.updated_at } : previous ? { kind: 'carried', from: previous.date } : { kind: 'starter' };
   const have = new Set(dates);
@@ -63,7 +65,7 @@ export default async function DeptEntryPage({ dept, searchParams }: { dept: Dept
         </div>
       )}
 
-      <DeptEntryForm key={date} dept={dept} date={date} today={today} initial={initial} meta={meta} recent={recent} />
+      <DeptEntryForm key={date} dept={dept} date={date} today={today} initial={initial} meta={meta} recent={recent} userName={userName} isAdmin={isAdmin} />
     </div>
   );
 }
