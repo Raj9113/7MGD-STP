@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SiteMap from './SiteMap';
+import LinkNotice from './LinkNotice';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,6 +59,10 @@ export default function LoginPage() {
           <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
             Department Portal Login
           </h3>
+
+          <Suspense fallback={null}>
+            <LinkNotice />
+          </Suspense>
 
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-300 text-red-700 text-sm text-center">

@@ -22,7 +22,8 @@ export default function SetPasswordPage() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
-        router.replace('/login');
+        // No session: the link expired / was already used (mail scanners often open it first)
+        router.replace('/login?error=invite_expired');
         return;
       }
       setUserEmail(user.email ?? null);

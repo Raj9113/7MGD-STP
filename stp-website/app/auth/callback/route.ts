@@ -27,7 +27,9 @@ export async function GET(request: Request) {
     });
     if (error) sessionError = error.message;
   } else {
-    sessionError = 'No auth token found in callback URL.';
+    // Supabase invite links use the implicit flow: the session arrives in the URL #fragment, which the server never sees.
+    // Browsers keep the fragment across a redirect, so hand over to the set-password page, whose browser client reads it.
+    return NextResponse.redirect(`${origin}/auth/set-password`);
   }
 
   if (sessionError) {
