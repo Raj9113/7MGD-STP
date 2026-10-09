@@ -34,6 +34,7 @@ export const SITE_MAP: SiteMapSection[] = [
     entries: [
       { label: 'Login', href: '/login', icon: '🔐', description: 'Sign in with your email and password.', access: 'public' },
       { label: 'Request Access', href: '/request-access', icon: '📨', description: 'Ask the administrator for a portal account.', access: 'public' },
+      { label: 'Forgot Password', href: '/auth/forgot-password', icon: '📧', description: 'Get an email link to reset a forgotten password or finish an expired invitation.', access: 'public' },
       { label: 'Set Password', href: '/auth/set-password', icon: '🔑', description: 'Choose a new password after your first sign-in or invite.', access: 'public' },
     ],
   },

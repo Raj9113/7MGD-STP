@@ -43,7 +43,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow public routes: login, auth callback, set-password, request-access, static assets
-  const publicPaths = ['/login', '/auth/callback', '/auth/set-password', '/request-access'];
+  const publicPaths = ['/login', '/auth/callback', '/auth/set-password', '/auth/forgot-password', '/request-access'];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
   // If user is not logged in and trying to access a protected route → redirect to /login

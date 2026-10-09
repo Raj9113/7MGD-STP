@@ -53,6 +53,7 @@ Also shown in the app on the login page ("View Site Map"); its data comes from [
 | `/` | Redirects to `/login` | Public |
 | `/login` | Sign in, link to request access, site map | Public |
 | `/request-access` | Request a portal account | Public |
+| `/auth/forgot-password` | Email a password-reset link (also fixes expired invitations) | Public |
 | `/auth/set-password` | Set a new password (first login / invite) | Public route, needs a session |
 | `/auth/callback` | Supabase auth callback | Public |
 | `/dashboard` | Overview and camera preview | Signed-in |
@@ -185,6 +186,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Password reset added:** "Forgot password?" on the login page opens `/auth/forgot-password`, which emails a reset link (`resetPasswordForEmail`) that returns via `/auth/callback?next=/auth/set-password`. Users whose invitation expired can use it instead of a new invite. Add `https://7-mgd-stp.vercel.app/auth/callback` to Supabase Redirect URLs (query strings are allowed by the same entry only with a wildcard, so use `https://7-mgd-stp.vercel.app/**`).
 - **Invitation link fix:** Supabase invite emails return the session in the URL `#fragment`, which `/auth/callback` (server) could not read, so every invite ended on the login page with no explanation. The callback now hands over to `/auth/set-password`, and the login page explains an expired / already-used link (`app/login/LinkNotice.tsx`). In Supabase set **Authentication → URL Configuration → Site URL** to `https://7-mgd-stp.vercel.app` and add `https://7-mgd-stp.vercel.app/auth/callback` to Redirect URLs.
 - **Logged-in names on reports:** "Prepared by" on all entry forms; department staff cannot type the shift supervisor name, it is their own login name on the shift they supervise (Admin types it).
 - **Loading feedback** added: a progress bar and "Loading…" pill appear the moment any link or page dropdown is used (`app/dashboard/NavProgress.tsx`, `lib/nav-pending.ts`), `app/dashboard/loading.tsx` shows a skeleton while a page loads, and a full-screen overlay (`app/dashboard/LoadingOverlay.tsx`) covers saving reports, downloads, sign-out and the admin / request forms.
