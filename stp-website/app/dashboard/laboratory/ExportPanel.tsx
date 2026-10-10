@@ -61,8 +61,6 @@ export default function ExportPanel({ month, monthLabel, selectedDay, firstDate,
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" aria-label="Download reports">
       <LoadingOverlay show={busy !== null} text={busy === 'excel' ? 'Preparing the Excel file…' : 'Preparing the Word file…'} />
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-gray-500">⬇ Download reports</h3>
-      <p className="mb-4 text-xs text-gray-400">Files come out in the same layout as the lab team’s Excel workbook and Word daily report.</p>
-
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Excel */}
         <div className="rounded-lg border border-green-200 bg-green-50 p-4">
