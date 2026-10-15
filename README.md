@@ -186,6 +186,8 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Show / hide password:** every password box (login, set password, confirm password) has an eye button (`app/PasswordInput.tsx`).
+- **Reset links that land on the wrong page:** a `?code=` on any page is forwarded to `/auth/callback` (middleware), and a `#access_token` recovery/invite fragment is forwarded to `/auth/set-password` (`app/AuthHashRedirect.tsx`), so reset links work even when Supabase falls back to the Site URL. Still add `https://7-mgd-stp.vercel.app/**` to the Supabase Redirect URLs.
 - **Password reset added:** "Forgot password?" on the login page opens `/auth/forgot-password`, which emails a reset link (`resetPasswordForEmail`) that returns via `/auth/callback?next=/auth/set-password`. Users whose invitation expired can use it instead of a new invite. Add `https://7-mgd-stp.vercel.app/auth/callback` to Supabase Redirect URLs (query strings are allowed by the same entry only with a wildcard, so use `https://7-mgd-stp.vercel.app/**`).
 - **Invitation link fix:** Supabase invite emails return the session in the URL `#fragment`, which `/auth/callback` (server) could not read, so every invite ended on the login page with no explanation. The callback now hands over to `/auth/set-password`, and the login page explains an expired / already-used link (`app/login/LinkNotice.tsx`). In Supabase set **Authentication → URL Configuration → Site URL** to `https://7-mgd-stp.vercel.app` and add `https://7-mgd-stp.vercel.app/auth/callback` to Redirect URLs.
 - **Logged-in names on reports:** "Prepared by" on all entry forms; department staff cannot type the shift supervisor name, it is their own login name on the shift they supervise (Admin types it).

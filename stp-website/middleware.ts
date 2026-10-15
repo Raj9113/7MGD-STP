@@ -12,6 +12,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
+  // A reset / invite link that Supabase sent to the wrong page (redirect URL not allow-listed) arrives as ?code=...;
+  // forward it to the callback, which signs the user in and opens the set-password page
+  const stray = request.nextUrl;
+  if (stray.searchParams.has('code') && !stray.pathname.startsWith('/auth/callback')) {
+    const cb = stray.clone();
+    cb.pathname = '/auth/callback';
+    cb.searchParams.set('next', '/auth/set-password');
+    return NextResponse.redirect(cb);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
