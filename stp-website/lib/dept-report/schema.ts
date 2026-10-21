@@ -4,6 +4,10 @@
  * so it can be used from client components too.
  */
 
+import { MECHANICAL } from './defs/mechanical';
+import { ELECTRICAL } from './defs/electrical';
+import { HOUSEKEEPING } from './defs/housekeeping';
+
 export type DeptSlug = 'mechanical' | 'electrical' | 'housekeeping';
 export const DEPT_SLUGS: DeptSlug[] = ['mechanical', 'electrical', 'housekeeping'];
 
@@ -85,253 +89,18 @@ const TONES: Record<string, Tone> = {
   standby: 'warn', medium: 'warn', open: 'warn', pending: 'warn', 'under maintenance': 'warn', 'on battery': 'warn', 'high do': 'warn',
   fault: 'bad', alert: 'bad', high: 'bad', active: 'bad', breakdown: 'bad', choked: 'bad', overflowing: 'bad', 'low do': 'bad',
   'in progress': 'info', acknowledged: 'info', low: 'muted', steady: 'muted', falling: 'muted', stopped: 'muted', off: 'muted',
+  // equipment checks
+  good: 'good', clean: 'good', clear: 'good', uniform: 'good', smooth: 'good', none: 'good', online: 'good', 'in service': 'good', charged: 'good', available: 'good', auto: 'good', 'cleaned today': 'good',
+  noisy: 'warn', minor: 'warn', slight: 'warn', patchy: 'warn', dirty: 'warn', fouled: 'warn', intermittent: 'warn', 'slightly turbid': 'warn', 'algae growth': 'warn', 'hard to operate': 'warn',
+  'manual mode': 'warn', 'not charged': 'warn', 'low oil': 'warn', 'needs attention': 'warn', 'reading doubtful': 'warn', 'not done': 'warn', 'not available': 'warn', 'lamp fault': 'bad',
+  'low intensity': 'warn', leaking: 'bad', damaged: 'bad', stuck: 'bad', clogged: 'bad', torn: 'bad', heavy: 'bad', turbid: 'bad', trip: 'bad', tripped: 'bad', offline: 'bad', lost: 'bad',
+  faulty: 'bad', expired: 'bad', missing: 'bad', seepage: 'bad', 'ballast fault': 'bad', 'out of order': 'bad', 'pink (change)': 'warn', 'blue (good)': 'good',
 };
 export const statusTone = (text: string | number | undefined): Tone | undefined => TONES[String(text ?? '').toLowerCase()];
 
 export const num = (v: Cell | undefined): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
 
-// ── MECHANICAL ────────────────────────────────────────────────────────────────
-
-const equipStatus = ['Running', 'Standby', 'Under maintenance', 'Fault', 'Stopped'];
-const percent = { min: 0, max: 100, step: '1' } as const;
-const healthWarn = (v: Cell | undefined): Level => (typeof v === 'number' ? (v < 75 ? 'bad' : v < 90 ? 'warn' : undefined) : undefined);
-
-export const MECHANICAL: DeptSchema = {
-  slug: 'mechanical', label: 'Mechanical', role: 'Mechanical', icon: '⚙️',
-  blurb: 'Pumps, blowers, clarifiers, flow meters, dissolved oxygen and maintenance work orders',
-  accent: { ring: 'border-orange-200', text: 'text-orange-700', bg: 'bg-orange-50', solid: 'bg-orange-600' },
-  sections: [
-    {
-      key: 'flows', title: 'Flow meter readings', icon: '💧', kind: 'table', view: 'cards', addLabel: 'Add flow meter', titleKeys: ['point'],
-      fields: [
-        { key: 'point', label: 'Flow meter', type: 'text', carry: true },
-        { key: 'value', label: 'Reading', type: 'number', unit: 'MLD', max: 100, step: '0.01' },
-        { key: 'time', label: 'Time', type: 'time' },
-        { key: 'trend', label: 'Trend', type: 'select', options: ['Rising', 'Steady', 'Falling'] },
-      ],
-      seed: [{ point: 'Inlet Flow Meter' }, { point: 'Effluent Flow Meter' }, { point: 'RAS Flow' }, { point: 'WAS Flow' }],
-    },
-    {
-      key: 'pumps', title: 'Pump station', icon: '🔄', kind: 'table', view: 'table', addLabel: 'Add pump', titleKeys: ['id', 'name'],
-      fields: [
-        { key: 'id', label: 'ID', type: 'text', carry: true },
-        { key: 'name', label: 'Pump', type: 'text', carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: equipStatus, status: true },
-        { key: 'flow', label: 'Flow rate', type: 'number', unit: 'MLD', max: 100, step: '0.01' },
-        { key: 'current', label: 'Current', type: 'number', unit: 'A', max: 5000, step: '0.1' },
-        { key: 'hours', label: 'Run hours (total)', type: 'number', unit: 'hrs', max: 1_000_000, step: '1' },
-        { key: 'health', label: 'Health', type: 'number', unit: '%', bar: true, warn: healthWarn, ...percent },
-        { key: 'remarks', label: 'Remarks', type: 'text' },
-      ],
-      seed: [{ id: 'P1', name: 'Inlet Pump 1' }, { id: 'P2', name: 'Inlet Pump 2' }, { id: 'P3', name: 'Inlet Pump 3' }, { id: 'SP1', name: 'Sludge Pump 1 (RAS)' }, { id: 'SP2', name: 'Sludge Pump 2 (WAS)' }],
-    },
-    {
-      key: 'blowers', title: 'Aeration blowers', icon: '💨', kind: 'table', view: 'cards', addLabel: 'Add blower', titleKeys: ['id', 'name'],
-      fields: [
-        { key: 'id', label: 'ID', type: 'text', carry: true },
-        { key: 'name', label: 'Blower', type: 'text', carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: equipStatus, status: true },
-        { key: 'airflow', label: 'Air flow', type: 'number', unit: 'm³/hr', max: 100_000, step: '1' },
-        { key: 'pressure', label: 'Discharge pressure', type: 'number', unit: 'bar', max: 50, step: '0.01' },
-        { key: 'temp', label: 'Bearing temperature', type: 'number', unit: '°C', max: 250, step: '1', warn: (v) => (typeof v === 'number' && v > 75 ? 'bad' : undefined) },
-        { key: 'health', label: 'Health', type: 'number', unit: '%', bar: true, warn: healthWarn, ...percent },
-        { key: 'remarks', label: 'Remarks', type: 'text' },
-      ],
-      seed: [{ id: 'B1', name: 'Aeration Blower 1' }, { id: 'B2', name: 'Aeration Blower 2' }, { id: 'B3', name: 'Aeration Blower 3' }],
-    },
-    {
-      key: 'do', title: 'Dissolved oxygen - aeration tank', icon: '🫧', kind: 'table', view: 'cards', addLabel: 'Add zone', titleKeys: ['zone'],
-      fields: [
-        { key: 'zone', label: 'Zone', type: 'text', carry: true },
-        { key: 'value', label: 'DO', type: 'number', unit: 'mg/L', max: 20, step: '0.1' },
-        { key: 'status', label: 'Status', type: 'select', options: ['OK', 'Low DO', 'High DO'], status: true },
-      ],
-      seed: [{ zone: 'Aeration Zone 1' }, { zone: 'Aeration Zone 2' }, { zone: 'Aeration Zone 3' }, { zone: 'Aeration Zone 4' }],
-    },
-    {
-      key: 'clarifiers', title: 'Clarifiers', icon: '🏊', kind: 'table', view: 'cards', addLabel: 'Add clarifier', titleKeys: ['name'],
-      fields: [
-        { key: 'id', label: 'ID', type: 'text', carry: true },
-        { key: 'name', label: 'Clarifier', type: 'text', carry: true },
-        { key: 'blanket', label: 'Sludge blanket', type: 'number', unit: 'm', max: 20, step: '0.01' },
-        { key: 'weir', label: 'Weir overflow', type: 'select', options: ['Normal', 'Choked', 'Overflowing'], status: true },
-        { key: 'scraper', label: 'Scraper', type: 'select', options: ['Running', 'Stopped', 'Fault'], status: true },
-        { key: 'efficiency', label: 'Removal efficiency', type: 'number', unit: '%', bar: true, ...percent },
-      ],
-      seed: [{ id: 'PC1', name: 'Primary Clarifier' }, { id: 'SC1', name: 'Secondary Clarifier 1' }, { id: 'SC2', name: 'Secondary Clarifier 2' }],
-    },
-    {
-      key: 'workorders', title: 'Maintenance work orders', icon: '🔧', kind: 'table', view: 'table', addLabel: 'Add work order', titleKeys: ['id', 'title'],
-      carryMode: 'open-rows', doneWhen: { key: 'status', values: ['Completed'] },
-      help: 'Open work orders are carried to the next day automatically. Mark one Completed on the day it is finished.',
-      fields: [
-        { key: 'id', label: 'WO #', type: 'text', carry: true },
-        { key: 'title', label: 'Title', type: 'text', carry: true },
-        { key: 'priority', label: 'Priority', type: 'select', options: ['Low', 'Medium', 'High'], status: true, carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: ['Open', 'In Progress', 'Completed'], status: true },
-        { key: 'due', label: 'Due date', type: 'date', carry: true },
-        { key: 'assignee', label: 'Assignee', type: 'text', carry: true },
-      ],
-    },
-  ],
-};
-
-// ── ELECTRICAL ────────────────────────────────────────────────────────────────
-
-export const ELECTRICAL: DeptSchema = {
-  slug: 'electrical', label: 'Electrical', role: 'Electrical', icon: '⚡',
-  blurb: 'Power supply, MCC panels, energy consumption and alarms',
-  accent: { ring: 'border-yellow-200', text: 'text-yellow-700', bg: 'bg-yellow-50', solid: 'bg-yellow-600' },
-  sections: [
-    {
-      key: 'power', title: 'Main incoming - power parameters', icon: '🔌', kind: 'fields', view: 'stats',
-      fields: [
-        { key: 'v_r', label: 'Incoming voltage (R)', type: 'number', unit: 'V', max: 1000, step: '0.1' },
-        { key: 'v_y', label: 'Incoming voltage (Y)', type: 'number', unit: 'V', max: 1000, step: '0.1' },
-        { key: 'v_b', label: 'Incoming voltage (B)', type: 'number', unit: 'V', max: 1000, step: '0.1' },
-        { key: 'freq', label: 'Frequency', type: 'number', unit: 'Hz', max: 70, step: '0.01' },
-        { key: 'pf', label: 'Power factor', type: 'number', max: 1, step: '0.01', warn: (v) => (typeof v === 'number' && v < 0.9 ? 'warn' : undefined) },
-        { key: 'load', label: 'Total load', type: 'number', unit: 'kW', max: 100_000, step: '0.1' },
-      ],
-    },
-    {
-      key: 'energy', title: 'Energy consumption', icon: '📊', kind: 'fields', view: 'stats',
-      help: 'The plant total used today. The laboratory report\'s energy-meter reading is entered in the next section.',
-      fields: [
-        { key: 'units', label: 'Energy used today', type: 'number', unit: 'kWh', max: 1_000_000, step: '1' },
-        { key: 'max_demand', label: 'Maximum demand', type: 'number', unit: 'kVA', max: 100_000, step: '0.1' },
-      ],
-    },
-    {
-      key: 'meter', title: 'Energy meter 1 (laboratory report)', icon: '🧮', kind: 'fields', view: 'stats',
-      help: 'The reading printed on the laboratory daily report (Word / PDF). Open is yesterday\'s close. Difference and total units are worked out for you: units = (close - open) x multiplication factor.',
-      fields: [
-        { key: 'open', label: 'Open reading', type: 'number', max: 10_000_000, step: '0.01', carryFrom: 'close' },
-        { key: 'close', label: 'Close reading', type: 'number', max: 10_000_000, step: '0.01' },
-        { key: 'multiplier', label: 'Multiplication factor', type: 'number', min: 1, max: 1_000_000, step: '1', carry: true },
-        { key: 'pf', label: 'Power factor (meter)', type: 'number', max: 1, step: '0.01', warn: (v) => (typeof v === 'number' && v < 0.9 ? 'warn' : undefined) },
-        { key: 'diff', label: 'Difference', type: 'number', derive: (r) => (typeof r.open === 'number' && typeof r.close === 'number' && r.close >= r.open ? Math.round((r.close - r.open) * 100) / 100 : undefined) },
-        { key: 'units', label: 'Total units', type: 'number', unit: 'kWh', derive: (r) => (typeof r.open === 'number' && typeof r.close === 'number' && r.close >= r.open ? Math.round(((r.close - r.open) * (typeof r.multiplier === 'number' ? r.multiplier : 1)) * 100) / 100 : undefined) },
-      ],
-      seed: [{ multiplier: 2000 }],
-      check: (r) => ((typeof r.open === 'number') !== (typeof r.close === 'number') ? { field: 'close', message: 'Enter both the open and the close reading.' }
-        : typeof r.open === 'number' && typeof r.close === 'number' && r.close < r.open ? { field: 'close', message: 'Close reading cannot be lower than the open reading.' } : undefined),
-    },
-    {
-      key: 'mcc', title: 'MCC panels', icon: '🗄', kind: 'table', view: 'cards', addLabel: 'Add panel', titleKeys: ['id', 'name'],
-      fields: [
-        { key: 'id', label: 'ID', type: 'text', carry: true },
-        { key: 'name', label: 'Panel', type: 'text', carry: true },
-        { key: 'load', label: 'Total load', type: 'number', unit: 'kW', max: 100_000, step: '0.1' },
-        { key: 'breakers', label: 'Breakers', type: 'number', max: 1000, step: '1', carry: true },
-        { key: 'tripped', label: 'Tripped', type: 'number', max: 1000, step: '1', warn: (v) => (typeof v === 'number' && v > 0 ? 'bad' : undefined) },
-        { key: 'status', label: 'Status', type: 'select', options: ['Healthy', 'Alert', 'Fault'], status: true },
-      ],
-      seed: [{ id: 'MCC-1', name: 'MCC 1 - Inlet Pumps' }, { id: 'MCC-2', name: 'MCC 2 - Aeration Blowers' }, { id: 'MCC-3', name: 'MCC 3 - Sludge & Misc.' }],
-    },
-    {
-      key: 'alarms', title: 'Alarm history - today', icon: '🚨', kind: 'table', view: 'table', addLabel: 'Add alarm', titleKeys: ['id', 'desc'],
-      carryMode: 'open-rows', doneWhen: { key: 'status', values: ['Cleared'] },
-      help: 'Alarms that are not Cleared are carried to the next day.',
-      fields: [
-        { key: 'id', label: 'ID', type: 'text', carry: true },
-        { key: 'time', label: 'Time', type: 'time', carry: true },
-        { key: 'desc', label: 'Description', type: 'text', carry: true },
-        { key: 'severity', label: 'Severity', type: 'select', options: ['Low', 'Medium', 'High'], status: true, carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: ['Active', 'Acknowledged', 'Cleared'], status: true },
-      ],
-    },
-  ],
-};
-
-// ── HOUSEKEEPING ──────────────────────────────────────────────────────────────
-
-const taskFields: Field[] = [
-  { key: 'area', label: 'Area', type: 'text', carry: true },
-  { key: 'task', label: 'Task', type: 'text', carry: true },
-  { key: 'status', label: 'Status', type: 'select', options: ['Done', 'In Progress', 'Pending'], status: true },
-  { key: 'by', label: 'Done by', type: 'text' },
-];
-
-export const HOUSEKEEPING: DeptSchema = {
-  slug: 'housekeeping', label: 'Housekeeping', role: 'Housekeeping', icon: '🧹',
-  blurb: 'Cleaning schedule, chemicals, sludge disposal, PPE and pest control',
-  accent: { ring: 'border-green-200', text: 'text-green-700', bg: 'bg-green-50', solid: 'bg-green-600' },
-  sections: [
-    // Shifts: Morning 07-15, General 09-17 (office / general staff), Evening 15-23, Night 23-07 (India time).
-    // Each has a supervisor (a `loginName` field: staff cannot type it, see applyLoginNames) and its tasks.
-    { key: 'morning', title: 'Morning shift (07:00-15:00)', icon: '🌅', kind: 'fields', view: 'stats', shift: { from: 7, to: 15 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
-    {
-      key: 'morning_tasks', title: 'Morning shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields,
-      seed: [
-        { area: 'Inlet Chamber & Bar Screen', task: 'Cleaning & Debris Removal' }, { area: 'Grit Chamber', task: 'Desanding & Washing' },
-        { area: 'Aeration Tank Walkway', task: 'Sweeping & Mopping' }, { area: 'Blower Room', task: 'Dusting & Oil Spill Check' },
-        { area: 'Control Room', task: 'Cleaning & AC Filter' }, { area: 'Laboratory', task: 'Bench Cleaning & Waste Disposal' },
-      ],
-    },
-    { key: 'general', title: 'General shift (09:00-17:00)', icon: '🏢', kind: 'fields', view: 'stats', shift: { from: 9, to: 17 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
-    { key: 'general_tasks', title: 'General shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields },
-    { key: 'evening', title: 'Evening shift (15:00-23:00)', icon: '🌇', kind: 'fields', view: 'stats', shift: { from: 15, to: 23 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
-    {
-      key: 'evening_tasks', title: 'Evening shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields,
-      seed: [
-        { area: 'Effluent Outlet Area', task: 'Cleaning & Inspection' }, { area: 'Sludge Drying Beds', task: 'Turning & Levelling' },
-        { area: 'Toilet Blocks (Staff)', task: 'Cleaning & Disinfection' }, { area: 'Plant Boundary & Roads', task: 'Sweeping' },
-      ],
-    },
-    { key: 'night', title: 'Night shift (23:00-07:00)', icon: '🌙', kind: 'fields', view: 'stats', shift: { from: 23, to: 7 }, fields: [{ key: 'supervisor', label: 'Supervisor', type: 'text', loginName: true }] },
-    { key: 'night_tasks', title: 'Night shift - tasks', icon: '🧽', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['area'], fields: taskFields },
-    {
-      key: 'chemicals', title: 'Chemical stock', icon: '🧪', kind: 'table', view: 'cards', addLabel: 'Add chemical', titleKeys: ['name'],
-      fields: [
-        { key: 'name', label: 'Chemical', type: 'text', carry: true },
-        { key: 'unit', label: 'Unit', type: 'text', carry: true, placeholder: 'Kg / Litres' },
-        { key: 'stock', label: 'Stock now', type: 'number', max: 1_000_000, step: '0.1', carry: true, warn: (v, row) => (typeof v === 'number' && typeof row.threshold === 'number' && v <= row.threshold ? 'bad' : undefined) },
-        { key: 'capacity', label: 'Storage capacity', type: 'number', max: 1_000_000, step: '1', carry: true },
-        { key: 'threshold', label: 'Reorder level', type: 'number', max: 1_000_000, step: '1', carry: true },
-        { key: 'used', label: 'Used today', type: 'number', max: 1_000_000, step: '0.1' },
-        { key: 'added_on', label: 'Last added on', type: 'date', carry: true },
-      ],
-      seed: [
-        { name: 'Sodium Hypochlorite', unit: 'Litres', capacity: 500, threshold: 100 }, { name: 'Ferric Chloride', unit: 'Kg', capacity: 500, threshold: 100 },
-        { name: 'Polyelectrolyte (Polymer)', unit: 'Kg', capacity: 200, threshold: 50 }, { name: 'Lime (Calcium Hydroxide)', unit: 'Kg', capacity: 600, threshold: 120 },
-        { name: 'Alum (Aluminium Sulphate)', unit: 'Kg', capacity: 300, threshold: 75 },
-      ],
-    },
-    {
-      key: 'sludge', title: 'Sludge disposal - today', icon: '🚛', kind: 'table', view: 'table', addLabel: 'Add trip', titleKeys: ['vehicle'],
-      fields: [
-        { key: 'quantity', label: 'Quantity', type: 'number', unit: 'MT', max: 10_000, step: '0.1' },
-        { key: 'vehicle', label: 'Vehicle no.', type: 'text' },
-        { key: 'destination', label: 'Destination', type: 'text' },
-        { key: 'driver', label: 'Driver', type: 'text' },
-      ],
-    },
-    {
-      key: 'ppe', title: 'PPE stock', icon: '🦺', kind: 'table', view: 'table', addLabel: 'Add item', titleKeys: ['item'],
-      fields: [
-        { key: 'item', label: 'Item', type: 'text', carry: true },
-        { key: 'stock', label: 'In stock', type: 'number', max: 1_000_000, step: '1', carry: true, warn: (v, row) => (typeof v === 'number' && typeof row.required === 'number' && v < row.required ? 'bad' : undefined) },
-        { key: 'required', label: 'Required', type: 'number', max: 1_000_000, step: '1', carry: true },
-        { key: 'unit', label: 'Unit', type: 'text', carry: true, placeholder: 'pcs / pairs' },
-      ],
-      seed: [
-        { item: 'Safety Helmets', unit: 'pcs' }, { item: 'Rubber Boots', unit: 'pairs' }, { item: 'Chemical-resistant Gloves', unit: 'pairs' },
-        { item: 'Safety Goggles', unit: 'pcs' }, { item: 'Half-face Respirators', unit: 'pcs' }, { item: 'Reflective Vests', unit: 'pcs' },
-      ],
-    },
-    {
-      key: 'pest', title: 'Pest control', icon: '🦟', kind: 'table', view: 'table', addLabel: 'Add area', titleKeys: ['area'],
-      fields: [
-        { key: 'area', label: 'Area', type: 'text', carry: true },
-        { key: 'type', label: 'Treatment', type: 'text', carry: true },
-        { key: 'last_done', label: 'Last done', type: 'date', carry: true },
-        { key: 'next_due', label: 'Next due', type: 'date', carry: true },
-      ],
-      seed: [{ area: 'Inlet Chamber', type: 'Mosquito Spray' }, { area: 'Sludge Beds', type: 'Fly Control' }, { area: 'Utility Rooms', type: 'Rodent Bait' }],
-    },
-  ],
-};
+export { MECHANICAL, ELECTRICAL, HOUSEKEEPING };
 
 export const SCHEMAS: Record<DeptSlug, DeptSchema> = { mechanical: MECHANICAL, electrical: ELECTRICAL, housekeeping: HOUSEKEEPING };
 

@@ -87,6 +87,25 @@ function Input({ f, value, onChange, error, warn, id }: { f: Field; value: strin
   );
 }
 
+/** A worked-out value (e.g. total units, stock balance): shown, never typed */
+function Derived({ f, row }: { f: Field; row: Record<string, string> }) {
+  const typedRow = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v !== '' && Number.isFinite(Number(v)) ? Number(v) : v])) as Row;
+  const d = f.derive!(typedRow);
+  const bad = level(f, row) === 'bad';
+  return (
+    <div>
+      <p className="block text-xs font-medium text-gray-600">
+        {f.label}
+        {f.unit && <span className="ml-1 font-normal text-gray-400">({f.unit})</span>}
+      </p>
+      <div className={`mt-1 flex h-10 items-center rounded-lg border px-2.5 text-sm font-semibold ${bad ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 bg-gray-100 text-gray-800'}`} title="Worked out from the values beside it">
+        {d !== undefined ? d.toLocaleString('en-IN') : '—'}
+      </div>
+      <p className="mt-1 text-xs text-gray-400">Worked out for you</p>
+    </div>
+  );
+}
+
 export default function DeptEntryForm({ dept, date, today, initial, meta, recent, userName, isAdmin }: Props) {
   const schema = SCHEMAS[dept];
   const router = useRouter();
@@ -216,8 +235,21 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
         </section>
       )}
 
+      {schema.sections.length > 6 && (
+        <nav aria-label="Jump to a section" className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">Jump to</p>
+          <div className="flex flex-wrap gap-1.5">
+            {schema.sections.map((sec) => (
+              <a key={sec.key} href={`#sec-${sec.key}`} className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 hover:border-[#0062b8] hover:text-[#0062b8]">
+                {sec.icon} {sec.title.replace(/ \(.*\)$/, '')}
+              </a>
+            ))}
+          </div>
+        </nav>
+      )}
+
       {schema.sections.map((sec) => (
-        <section key={sec.key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <section key={sec.key} id={`sec-${sec.key}`} className="scroll-mt-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-500">{sec.icon} {sec.title}</h3>
           {sec.help && <p className="mt-1 text-xs text-gray-400">{sec.help}</p>}
 
@@ -247,23 +279,7 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
                     </div>
                   );
                 }
-                // A worked-out value (e.g. total units): shown, never typed
-                if (f.derive) {
-                  const typedRow = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v !== '' && Number.isFinite(Number(v)) ? Number(v) : v])) as Row;
-                  const d = f.derive(typedRow);
-                  return (
-                    <div key={f.key}>
-                      <p className="block text-xs font-medium text-gray-600">
-                        {f.label}
-                        {f.unit && <span className="ml-1 font-normal text-gray-400">({f.unit})</span>}
-                      </p>
-                      <div className="mt-1 flex h-10 items-center rounded-lg border border-gray-200 bg-gray-100 px-2.5 text-sm font-semibold text-gray-800" title="Worked out from the values above">
-                        {d !== undefined ? d.toLocaleString('en-IN') : '—'}
-                      </div>
-                      <p className="mt-1 text-xs text-gray-400">Worked out for you</p>
-                    </div>
-                  );
-                }
+                if (f.derive) return <Derived key={f.key} f={f} row={row} />;
                 return <Input key={f.key} id={`${sec.key}.${f.key}`} f={f} value={row[f.key] ?? ''} onChange={(v) => setField(sec, f.key, v)} error={err(errorKey(sec.key, f.key))} warn={level(f, row)} />;
               })}
             </div>
@@ -281,9 +297,9 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
                       </button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                      {sec.fields.map((f) => (
-                        <Input key={f.key} id={`${sec.key}.${i}.${f.key}`} f={f} value={row[f.key] ?? ''} onChange={(v) => setCell(sec, i, f.key, v)} error={err(errorKey(sec.key, f.key, i))} warn={level(f, row)} />
-                      ))}
+                      {sec.fields.map((f) => (f.derive
+                        ? <Derived key={f.key} f={f} row={row} />
+                        : <Input key={f.key} id={`${sec.key}.${i}.${f.key}`} f={f} value={row[f.key] ?? ''} onChange={(v) => setCell(sec, i, f.key, v)} error={err(errorKey(sec.key, f.key, i))} warn={level(f, row)} />))}
                     </div>
                   </div>
                 );
