@@ -247,6 +247,23 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
                     </div>
                   );
                 }
+                // A worked-out value (e.g. total units): shown, never typed
+                if (f.derive) {
+                  const typedRow = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v !== '' && Number.isFinite(Number(v)) ? Number(v) : v])) as Row;
+                  const d = f.derive(typedRow);
+                  return (
+                    <div key={f.key}>
+                      <p className="block text-xs font-medium text-gray-600">
+                        {f.label}
+                        {f.unit && <span className="ml-1 font-normal text-gray-400">({f.unit})</span>}
+                      </p>
+                      <div className="mt-1 flex h-10 items-center rounded-lg border border-gray-200 bg-gray-100 px-2.5 text-sm font-semibold text-gray-800" title="Worked out from the values above">
+                        {d !== undefined ? d.toLocaleString('en-IN') : '—'}
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">Worked out for you</p>
+                    </div>
+                  );
+                }
                 return <Input key={f.key} id={`${sec.key}.${f.key}`} f={f} value={row[f.key] ?? ''} onChange={(v) => setField(sec, f.key, v)} error={err(errorKey(sec.key, f.key))} warn={level(f, row)} />;
               })}
             </div>

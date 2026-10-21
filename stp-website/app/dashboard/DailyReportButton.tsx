@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { fetchFile, saveBlob } from '@/lib/download';
 import LoadingOverlay from './LoadingOverlay';
+import FormatPicker, { FORMAT_INFO, type Format } from './FormatPicker';
 
 type Mode = 'day' | 'range';
 
@@ -12,7 +13,7 @@ const dateInput =
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-/** Admin-only: opens a small panel to pick a date or a custom range and downloads the all-department daily report as a PDF. */
+/** Admin-only: opens a small panel to pick a date or a custom range and a format (PDF, Word or Excel) and downloads the all-department daily report. */
 export default function DailyReportButton({ today }: { today: string }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('day');
@@ -20,6 +21,7 @@ export default function DailyReportButton({ today }: { today: string }) {
   const [from, setFrom] = useState(today);
   const [to, setTo] = useState(today);
   const [photos, setPhotos] = useState(true);
+  const [format, setFormat] = useState<Format>('pdf');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,8 +32,8 @@ export default function DailyReportButton({ today }: { today: string }) {
     setError(null);
     setBusy(true);
     try {
-      const { blob, name } = await fetchFile(`/api/reports/daily-pdf?from=${range[0]}&to=${range[1]}&photos=${photos ? 1 : 0}`);
-      saveBlob(blob, name ?? `Daily Plant Report ${range[0]}.pdf`);
+      const { blob, name } = await fetchFile(`/api/reports/daily?format=${format}&from=${range[0]}&to=${range[1]}&photos=${photos ? 1 : 0}`);
+      saveBlob(blob, name ?? `Daily Plant Report ${range[0]}${FORMAT_INFO[format].ext}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The download failed. Please try again.');
     } finally {
@@ -41,11 +43,11 @@ export default function DailyReportButton({ today }: { today: string }) {
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" aria-label="Daily report">
-      <LoadingOverlay show={busy} text="Preparing the daily report PDF… this can take a few seconds" />
+      <LoadingOverlay show={busy} text={`${FORMAT_INFO[format].busy} this can take a few seconds`} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-gray-800">📄 Daily plant report</p>
-          <p className="text-xs text-gray-500">All departments in one PDF: laboratory, electrical, mechanical, housekeeping and portal activity.</p>
+          <p className="text-xs text-gray-500">All departments in one file (PDF, Word or Excel): laboratory, electrical, mechanical, housekeeping and portal activity.</p>
         </div>
         <button
           id="daily-report-toggle"
@@ -54,7 +56,7 @@ export default function DailyReportButton({ today }: { today: string }) {
           onClick={() => setOpen((v) => !v)}
           className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#0062b8] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#004f96]"
         >
-          📄 Daily Report (PDF) <span aria-hidden>{open ? '▴' : '▾'}</span>
+          📄 Daily Report <span aria-hidden>{open ? '▴' : '▾'}</span>
         </button>
       </div>
 
@@ -103,10 +105,16 @@ export default function DailyReportButton({ today }: { today: string }) {
                 : <>One report per day from <b>{longDate(range[0])}</b> to <b>{longDate(range[1])}</b></>}
           </p>
 
-          <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" checked={photos} onChange={(e) => setPhotos(e.target.checked)} className="h-4 w-4 accent-[#0062b8]" />
-            Include laboratory photographs
-          </label>
+          <div className="mt-3">
+            <FormatPicker value={format} onChange={setFormat} disabled={busy} />
+          </div>
+
+          {format !== 'xlsx' && (
+            <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={photos} onChange={(e) => setPhotos(e.target.checked)} className="h-4 w-4 accent-[#0062b8]" />
+              Include laboratory photographs
+            </label>
+          )}
 
           <button
             id="daily-report-download"
@@ -115,7 +123,7 @@ export default function DailyReportButton({ today }: { today: string }) {
             disabled={busy || invalid}
             className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-[#0062b8] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#004f96] disabled:opacity-60"
           >
-            {busy ? 'Preparing PDF…' : '⬇ Download PDF'}
+            {busy ? 'Preparing…' : `⬇ Download ${FORMAT_INFO[format].label} (${FORMAT_INFO[format].ext})`}
           </button>
           <p className="mt-2 text-xs text-gray-500">
             Up to 31 days at a time. Each day has its own pages. A department that did not enter a report for a date shows

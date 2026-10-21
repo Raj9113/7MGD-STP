@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { canEditLab } from '@/lib/access';
-import { DEFAULT_MULTIPLIER, ENTRY_FIELDS, fieldName, todayIST } from '../entry-fields';
+import { ENTRY_FIELDS, fieldName, todayIST } from '../entry-fields';
 import { lab, type DayRecord } from '../lab';
 import { loadLab } from '../lab-live';
 import EntryForm, { type EntryMeta, type RecentDay } from './EntryForm';
@@ -48,18 +48,6 @@ export default async function LabEntryPage({
   put('flow_treated', day?.flow?.treated);
   for (const f of ENTRY_FIELDS) {
     for (const side of f.sides) put(fieldName(f.key, side), (day as Record<string, { in?: number | null; out?: number | null }> | undefined)?.[f.key]?.[side]);
-  }
-  put('power_open', report?.power?.open);
-  put('power_close', report?.power?.close);
-  put('power_pf', report?.power?.pf);
-  defaults.power_multiplier = String(report?.power?.multiplier ?? DEFAULT_MULTIPLIER);
-
-  // A new day's meter "open" reading is the previous day's "close"
-  if (!report?.power?.open) {
-    const before = Object.values(data.reports)
-      .filter((r) => r.date < date && typeof r.power?.close === 'number')
-      .sort((a, b) => b.date.localeCompare(a.date))[0];
-    if (before?.power?.close != null) defaults.power_open = String(before.power.close);
   }
 
   const meta: EntryMeta = live

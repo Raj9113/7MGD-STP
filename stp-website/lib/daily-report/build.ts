@@ -32,13 +32,13 @@ export interface DailyReportInput {
 }
 
 const IST_MS = 5.5 * 3600 * 1000;
-const istDate = (iso: string) => new Date(Date.parse(iso) + IST_MS).toISOString().slice(0, 10);
-const istTime = (iso: string) => new Date(Date.parse(iso) + IST_MS).toISOString().slice(11, 16);
-const longDay = (iso: string) =>
+export const istDate = (iso: string) => new Date(Date.parse(iso) + IST_MS).toISOString().slice(0, 10);
+export const istTime = (iso: string) => new Date(Date.parse(iso) + IST_MS).toISOString().slice(11, 16);
+export const longDay = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' });
-const shortDay = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+export const shortDay = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', timeZone: 'UTC' });
 
-const ACTION_LABEL: Record<string, string> = {
+export const ACTION_LABEL: Record<string, string> = {
   LOGIN: 'Login', LOGOUT: 'Logout', INVITE_USER: 'Invited user', UPDATE_ROLE: 'Role change', DELETE_USER: 'Deleted user',
   DATA_ENTRY: 'Data entry', DATA_UPDATE: 'Data update', DATA_DELETE: 'Data delete',
 };
@@ -49,11 +49,11 @@ const NO_DATA_TAG = { text: 'NO REPORT ENTERED', fg: COLORS.muted, bg: COLORS.gr
 const DEPT_COLOR: Record<DeptSlug, RGB> = { mechanical: COLORS.orange, electrical: COLORS.amber, housekeeping: COLORS.green };
 const TONE_COLOR: Record<Tone, RGB> = { good: COLORS.good, warn: COLORS.amber, bad: COLORS.bad, info: COLORS.blue, muted: COLORS.muted };
 
-const val = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
-const num2 = (v: number | null | undefined) => (typeof v === 'number' ? v.toFixed(2) : '-');
+export const val = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
+export const num2 = (v: number | null | undefined) => (typeof v === 'number' ? v.toFixed(2) : '-');
 
 type Row13 = ParamKey | 'flow';
-const ROWS: { key: Row13; label: string; unit: string }[] = [
+export const ROWS: { key: Row13; label: string; unit: string }[] = [
   { key: 'flow', label: 'Flow', unit: 'MGD' },
   { key: 'temp', label: 'Temperature', unit: '°C' },
   { key: 'ph', label: 'pH', unit: '' },
@@ -69,13 +69,13 @@ const ROWS: { key: Row13; label: string; unit: string }[] = [
   { key: 'coliform', label: 'Total Coliform', unit: 'MPN/100 ml' },
 ];
 
-function readings(key: Row13, d: DayRecord | undefined): { in: string; out: string } {
+export function readings(key: Row13, d: DayRecord | undefined): { in: string; out: string } {
   if (key === 'flow') return { in: val(d?.flow?.pumping) ?? '-', out: val(d?.flow?.treated) ?? '-' };
   const dash = key === 'coliform' ? '--' : '-';
   return { in: val(d?.[key]?.in) ?? (key === 'do' ? 'NIL' : dash), out: val(d?.[key]?.out) ?? dash };
 }
 
-const STATUS_STYLE = (s: ReturnType<typeof limitStatus>): { text: string; color: RGB; bold: boolean } =>
+export const STATUS_STYLE = (s: ReturnType<typeof limitStatus>): { text: string; color: RGB; bold: boolean } =>
   s === 'ok' ? { text: 'Within limit', color: COLORS.good, bold: false }
   : s === 'over' ? { text: 'ABOVE LIMIT', color: COLORS.bad, bold: true }
   : s === 'under' ? { text: 'BELOW LIMIT', color: COLORS.bad, bold: true }
@@ -99,11 +99,11 @@ async function embed(kit: Kit, bytes: Buffer, width: number): Promise<PDFImage |
 
 const WEIGHT: Record<string, number> = { name: 2.4, title: 2.6, desc: 2.8, task: 2.2, area: 2.2, destination: 2, remarks: 2.2, point: 2, item: 2.2, model: 2 };
 const weight = (f: Field) => WEIGHT[f.key] ?? (f.type === 'text' ? 1.3 : f.type === 'select' ? 1.15 : f.type === 'date' ? 1.1 : f.type === 'time' ? 0.8 : 0.95);
-const header = (f: Field) => (f.unit && f.type === 'number' ? `${f.label} (${f.unit})` : f.label);
-const cellText = (f: Field, v: Row[string] | undefined) => (f.type === 'number' && typeof v === 'number' ? String(v) : showValue({ ...f, unit: undefined }, v));
+export const header = (f: Field) => (f.unit && f.type === 'number' ? `${f.label} (${f.unit})` : f.label);
+export const cellText = (f: Field, v: Row[string] | undefined) => (f.type === 'number' && typeof v === 'number' ? String(v) : showValue({ ...f, unit: undefined }, v));
 
-const isDone = (sec: Section, r: Row) => !!sec.doneWhen && sec.doneWhen.values.includes(String(r[sec.doneWhen.key] ?? ''));
-const rowBad = (sec: Section, r: Row) => !isDone(sec, r) && sec.fields.some((f) => (f.status && statusTone(r[f.key]) === 'bad') || f.warn?.(r[f.key], r) === 'bad');
+export const isDone = (sec: Section, r: Row) => !!sec.doneWhen && sec.doneWhen.values.includes(String(r[sec.doneWhen.key] ?? ''));
+export const rowBad = (sec: Section, r: Row) => !isDone(sec, r) && sec.fields.some((f) => (f.status && statusTone(r[f.key]) === 'bad') || f.warn?.(r[f.key], r) === 'bad');
 
 /** Column widths by weight, but never narrower than the longest header word (so headers never break mid-word) */
 function fitColumns(kit: Kit, fields: Field[], size: number): number[] {
@@ -175,7 +175,7 @@ function deptSections(kit: Kit, schema: DeptSchema, data: DeptData, color: RGB) 
 
 // ── one day ──────────────────────────────────────────────────────────────────
 
-interface DayFacts {
+export interface DayFacts {
   date: string;
   day?: DayRecord;
   power?: DayReport['power'];
@@ -191,7 +191,7 @@ interface DayFacts {
   energySource: string;
 }
 
-function facts(date: string, input: DailyReportInput): DayFacts {
+export function facts(date: string, input: DailyReportInput): DayFacts {
   const { lab, activity, dept } = input;
   const day = lab.months.flatMap((m) => m.days).find((d) => d.date === date);
   const states = LIMITED.map((k) => ({ k, s: limitStatus(k, day?.[k]?.out) })).filter((x) => x.s !== 'na');
@@ -302,25 +302,11 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
     const shots = input.photos.get(f.date) ?? [];
     if (shots.length) {
       kit.subheading('Sample photographs');
-      const olms = shots.find((s) => s.kind === 'olms');
-      const sample = shots.find((s) => s.kind === 'sample');
-      const boxW = (CONTENT_W - 12) / 2;
-      const boxH = 190;
-      kit.ensure(boxH + 24);
-      const top = kit.y;
-      let drawn = 0;
-      for (const [i, shot, cap] of [[0, olms, 'OLMS analyser display'], [1, sample, 'Inlet & outlet samples']] as const) {
-        if (!shot) continue;
-        const img = await embed(kit, shot.bytes, input.photoWidth ?? 1000);
-        if (!img) continue;
-        kit.y = top;
-        const x = 40 + i * (boxW + 12);
-        const { w, h } = kit.image(img, x, boxW, boxH);
-        kit.page.drawRectangle({ x, y: kit.page.getHeight() - top - h, width: w, height: h, borderColor: COLORS.line, borderWidth: 0.6 });
-        kit.page.drawText(cap, { x, y: kit.page.getHeight() - top - boxH - 11, size: 8, font: kit.regular, color: COLORS.muted });
-        drawn++;
-      }
-      kit.y = top + (drawn ? boxH + 20 : 0);
+      const [olms, sample] = await Promise.all(['olms', 'sample'].map(async (kind) => {
+        const shot = shots.find((s) => s.kind === kind);
+        return shot ? embed(kit, shot.bytes, input.photoWidth ?? 1000) : null;
+      }));
+      kit.photoFrame(olms ?? undefined, sample ?? undefined);
     }
 
     if (f.power) {

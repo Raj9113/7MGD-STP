@@ -45,6 +45,13 @@ function row(fields: Field[], raw: unknown, section: string, index: number | und
     const v = cell(f, src[f.key], errorKey(section, f.key, index), errors);
     if (v !== undefined) out[f.key] = v;
   }
+  // worked-out values are always recomputed here, whatever the browser sent
+  for (const f of fields) {
+    if (!f.derive) continue;
+    delete out[f.key];
+    const d = f.derive(out);
+    if (d !== undefined && Number.isFinite(d)) out[f.key] = d;
+  }
   return out;
 }
 
@@ -58,6 +65,8 @@ export function parseReport(schema: DeptSchema, raw: unknown): ParsedReport {
     const val = input[sec.key];
     if (sec.kind === 'fields') {
       const r = row(sec.fields, val, sec.key, undefined, errors);
+      const bad = sec.check?.(r);
+      if (bad && !errors[errorKey(sec.key, bad.field)]) errors[errorKey(sec.key, bad.field)] = bad.message;
       if (!isEmptyRow(r)) data[sec.key] = r;
     } else {
       const list = Array.isArray(val) ? val : [];

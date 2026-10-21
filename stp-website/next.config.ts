@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
     "/api/lab/photo/**": ["./data/lab/photos/**/*"],
     // Excel / Word downloads are filled from templates cut from the lab team's own files (+ the photos for Word)
     // Daily plant report PDF: logos + lab photos
-    "/api/reports/daily-pdf": ["./templates/report/**/*", "./data/lab/photos/**/*"],
-    "/api/lab/export/**": ["./templates/lab/**/*", "./data/lab/photos/**/*"],
+    "/api/reports/daily": ["./templates/report/**/*", "./data/lab/photos/**/*"],
+    "/api/lab/export/**": ["./templates/lab/**/*", "./templates/report/**/*", "./data/lab/photos/**/*"],
   },
 };
 

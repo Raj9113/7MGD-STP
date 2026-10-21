@@ -115,7 +115,6 @@ export async function saveLabEntry(_prev: SaveLabState, formData: FormData): Pro
       {
         date: parsed.date,
         readings: parsed.readings,
-        power: parsed.power,
         photos,
         created_by: existing?.created_by ?? user.id,
         created_by_name: existing?.created_by_name ?? who,

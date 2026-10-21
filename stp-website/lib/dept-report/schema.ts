@@ -34,6 +34,10 @@ export interface Field {
   carry?: boolean;
   /** A person's name: department staff get their own login name (they cannot type it); only Admin types it. See applyLoginNames. */
   loginName?: boolean;
+  /** Starts from the previous report's value of this other field (e.g. a meter's open reading = yesterday's close) */
+  carryFrom?: string;
+  /** Worked out from the other values of the row (not typed): shown read-only in the form and stored when the report is saved */
+  derive?: (row: Row) => number | undefined;
   /** Highlights a value (red / amber) in the form and the views */
   warn?: (v: number | string | undefined, row: Row) => Level;
 }
@@ -59,6 +63,8 @@ export interface Section {
   doneWhen?: { key: string; values: string[] };
   /** Rows used the very first time, before any report exists (names only: readings stay blank) */
   seed?: Row[];
+  /** fields: a rule across the section's values; returns the field to flag and the message, or nothing when fine */
+  check?: (row: Row) => { field: string; message: string } | undefined;
 }
 
 export interface DeptSchema {
@@ -174,7 +180,7 @@ export const MECHANICAL: DeptSchema = {
 
 export const ELECTRICAL: DeptSchema = {
   slug: 'electrical', label: 'Electrical', role: 'Electrical', icon: '⚡',
-  blurb: 'Power supply, MCC panels, DG set, UPS, energy consumption and alarms',
+  blurb: 'Power supply, MCC panels, energy consumption and alarms',
   accent: { ring: 'border-yellow-200', text: 'text-yellow-700', bg: 'bg-yellow-50', solid: 'bg-yellow-600' },
   sections: [
     {
@@ -190,11 +196,26 @@ export const ELECTRICAL: DeptSchema = {
     },
     {
       key: 'energy', title: 'Energy consumption', icon: '📊', kind: 'fields', view: 'stats',
-      help: 'The laboratory report also holds a meter reading; enter the plant total used today here.',
+      help: 'The plant total used today. The laboratory report\'s energy-meter reading is entered in the next section.',
       fields: [
         { key: 'units', label: 'Energy used today', type: 'number', unit: 'kWh', max: 1_000_000, step: '1' },
         { key: 'max_demand', label: 'Maximum demand', type: 'number', unit: 'kVA', max: 100_000, step: '0.1' },
       ],
+    },
+    {
+      key: 'meter', title: 'Energy meter 1 (laboratory report)', icon: '🧮', kind: 'fields', view: 'stats',
+      help: 'The reading printed on the laboratory daily report (Word / PDF). Open is yesterday\'s close. Difference and total units are worked out for you: units = (close - open) x multiplication factor.',
+      fields: [
+        { key: 'open', label: 'Open reading', type: 'number', max: 10_000_000, step: '0.01', carryFrom: 'close' },
+        { key: 'close', label: 'Close reading', type: 'number', max: 10_000_000, step: '0.01' },
+        { key: 'multiplier', label: 'Multiplication factor', type: 'number', min: 1, max: 1_000_000, step: '1', carry: true },
+        { key: 'pf', label: 'Power factor (meter)', type: 'number', max: 1, step: '0.01', warn: (v) => (typeof v === 'number' && v < 0.9 ? 'warn' : undefined) },
+        { key: 'diff', label: 'Difference', type: 'number', derive: (r) => (typeof r.open === 'number' && typeof r.close === 'number' && r.close >= r.open ? Math.round((r.close - r.open) * 100) / 100 : undefined) },
+        { key: 'units', label: 'Total units', type: 'number', unit: 'kWh', derive: (r) => (typeof r.open === 'number' && typeof r.close === 'number' && r.close >= r.open ? Math.round(((r.close - r.open) * (typeof r.multiplier === 'number' ? r.multiplier : 1)) * 100) / 100 : undefined) },
+      ],
+      seed: [{ multiplier: 2000 }],
+      check: (r) => ((typeof r.open === 'number') !== (typeof r.close === 'number') ? { field: 'close', message: 'Enter both the open and the close reading.' }
+        : typeof r.open === 'number' && typeof r.close === 'number' && r.close < r.open ? { field: 'close', message: 'Close reading cannot be lower than the open reading.' } : undefined),
     },
     {
       key: 'mcc', title: 'MCC panels', icon: '🗄', kind: 'table', view: 'cards', addLabel: 'Add panel', titleKeys: ['id', 'name'],
@@ -207,30 +228,6 @@ export const ELECTRICAL: DeptSchema = {
         { key: 'status', label: 'Status', type: 'select', options: ['Healthy', 'Alert', 'Fault'], status: true },
       ],
       seed: [{ id: 'MCC-1', name: 'MCC 1 - Inlet Pumps' }, { id: 'MCC-2', name: 'MCC 2 - Aeration Blowers' }, { id: 'MCC-3', name: 'MCC 3 - Sludge & Misc.' }],
-    },
-    {
-      key: 'dg', title: 'DG set', icon: '🔋', kind: 'fields', view: 'stats',
-      fields: [
-        { key: 'model', label: 'Model', type: 'text', carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: ['Auto-Standby', 'Running', 'Off', 'Fault'], status: true },
-        { key: 'fuel', label: 'Fuel level', type: 'number', unit: '%', bar: true, warn: (v) => (typeof v === 'number' ? (v < 25 ? 'bad' : v < 50 ? 'warn' : undefined) : undefined), ...percent },
-        { key: 'last_run', label: 'Last run', type: 'text', placeholder: 'e.g. 22 Jul 2026, 06:15 AM' },
-        { key: 'duration', label: 'Run duration', type: 'text', placeholder: 'e.g. 2 hrs 20 min' },
-        { key: 'hours', label: 'Total hours', type: 'number', unit: 'hrs', max: 1_000_000, step: '1' },
-        { key: 'next_service', label: 'Next service', type: 'text', placeholder: 'e.g. 250 hrs remaining' },
-      ],
-      seed: [{ model: 'Kirloskar 250 kVA' }],
-    },
-    {
-      key: 'ups', title: 'UPS', icon: '🔌', kind: 'fields', view: 'stats',
-      fields: [
-        { key: 'capacity', label: 'Capacity', type: 'text', carry: true },
-        { key: 'status', label: 'Status', type: 'select', options: ['Normal', 'On battery', 'Fault'], status: true },
-        { key: 'battery', label: 'Battery charge', type: 'number', unit: '%', bar: true, warn: (v) => (typeof v === 'number' ? (v < 50 ? 'bad' : v < 80 ? 'warn' : undefined) : undefined), ...percent },
-        { key: 'load', label: 'Current load', type: 'number', unit: 'kW', max: 1000, step: '0.1' },
-        { key: 'runtime', label: 'Backup runtime', type: 'text', placeholder: 'e.g. 4 hrs 30 min' },
-      ],
-      seed: [{ capacity: '20 kVA' }],
     },
     {
       key: 'alarms', title: 'Alarm history - today', icon: '🚨', kind: 'table', view: 'table', addLabel: 'Add alarm', titleKeys: ['id', 'desc'],
@@ -374,8 +371,12 @@ export function startingData(schema: DeptSchema, existing: DeptData | null, prev
     if (sec.kind === 'fields') {
       const row: Row = {};
       const src = prev ? asRow(prev) : ({} as Row);
-      for (const f of sec.fields) if (f.carry && src[f.key] !== undefined) row[f.key] = src[f.key];
-      if (!prev && sec.seed?.[0]) Object.assign(row, sec.seed[0]);
+      for (const f of sec.fields) {
+        if (f.carry && src[f.key] !== undefined) row[f.key] = src[f.key];
+        else if (f.carryFrom && src[f.carryFrom] !== undefined) row[f.key] = src[f.carryFrom];
+      }
+      // the first-ever values; for a section added later, only the carried settings (not names or readings)
+      for (const [k, v] of Object.entries(sec.seed?.[0] ?? {})) if (row[k] === undefined && (!prev || sec.fields.find((f) => f.key === k)?.carry)) row[k] = v;
       out[sec.key] = row;
     } else {
       const carried: Row[] = [];

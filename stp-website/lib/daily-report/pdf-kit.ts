@@ -244,6 +244,31 @@ export class Kit {
     this.y += 8;
   }
 
+  /**
+   * The photo frame of the lab's Word report: one dashed teal frame across the page, the OLMS photo in a box on the left and
+   * the sample photo in a square box on the right; each photo is fitted inside its box and centred (box sizes are the Word
+   * template's, scaled to the page width).
+   */
+  photoFrame(left?: PDFImage, right?: PDFImage) {
+    const k = CONTENT_W / 522.4;
+    const fh = 227.05 * k;
+    this.ensure(fh + 14);
+    const top = this.y;
+    this.page.drawRectangle({
+      x: PAGE.margin, y: this.py(top + fh), width: CONTENT_W, height: fh,
+      borderColor: hex('426E6C'), borderWidth: 1, borderDashArray: [5, 3],
+    });
+    const place = (img: PDFImage | undefined, boxX: number, boxW: number, boxH: number) => {
+      if (!img) return;
+      const s = Math.min(boxW / img.width, boxH / img.height);
+      const [w, h] = [img.width * s, img.height * s];
+      this.page.drawImage(img, { x: PAGE.margin + boxX + (boxW - w) / 2, y: this.py(top + (fh - h) / 2 + h), width: w, height: h });
+    };
+    place(left, 0.75 * k, 259.2 * k, 194.25 * k);
+    place(right, 279.75 * k, 224.25 * k, 224.25 * k);
+    this.y = top + fh + 10;
+  }
+
   /** Draws an image scaled to fit the box (left aligned); returns the drawn height. */
   image(img: PDFImage, x: number, maxW: number, maxH: number): { w: number; h: number } {
     const s = Math.min(maxW / img.width, maxH / img.height);

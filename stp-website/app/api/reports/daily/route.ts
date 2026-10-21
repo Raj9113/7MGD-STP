@@ -9,6 +9,9 @@ import { todayIST } from '@/app/dashboard/laboratory/entry-fields';
 import { parsePhotoSrc, readLabPhoto } from '@/lib/lab-export/photos';
 import { loadAllRange } from '@/lib/dept-report/load';
 import { buildDailyReportPdf, type ActivityRow, type DayPhotoBytes } from '@/lib/daily-report/build';
+import { buildDailyReportDoc } from '@/lib/daily-report/doc';
+import { renderDocx } from '@/lib/report-doc/docx';
+import { renderXlsx } from '@/lib/report-doc/xlsx';
 
 const MAX_DAYS = 31;
 const MAX_BYTES = 4_300_000; // what the host can return in one response (Vercel: 4.5 MB)
@@ -16,10 +19,17 @@ const isDate = (s: string | null): s is string =>
   !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 const ddmmyyyy = (iso: string) => iso.split('-').reverse().join('-');
 
+const FORMATS = {
+  pdf: { mime: 'application/pdf', ext: 'pdf' },
+  docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', ext: 'docx' },
+  xlsx: { mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', ext: 'xlsx' },
+} as const;
+type Format = keyof typeof FORMATS;
+
 /**
- * GET /api/reports/daily-pdf?from=2026-09-15&to=2026-09-15&photos=1
+ * GET /api/reports/daily?format=pdf|docx|xlsx&from=2026-09-15&to=2026-09-15&photos=1
  *
- * Admin only. A PDF with one chapter per day: summary, laboratory (readings, photos, power), and the daily reports of the
+ * Admin only. A PDF, Word file or Excel workbook with one chapter per day: summary, laboratory (readings, photos, power), and the daily reports of the
  * Electrical, Mechanical and Housekeeping departments, then that day's portal activity.
  */
 export async function GET(request: Request) {
@@ -39,7 +49,10 @@ export async function GET(request: Request) {
   if (to > todayIST()) return NextResponse.json({ error: 'The report cannot include future dates.' }, { status: 400 });
   const span = (Date.parse(to) - Date.parse(from)) / 86400000 + 1;
   if (span > MAX_DAYS) return NextResponse.json({ error: `Choose at most ${MAX_DAYS} days at a time.` }, { status: 400 });
-  const withPhotos = q.get('photos') !== '0';
+  const format = (q.get('format') ?? 'pdf') as Format;
+  if (!(format in FORMATS)) return NextResponse.json({ error: 'Choose PDF, Word or Excel.' }, { status: 400 });
+  // Excel workbooks hold figures only: no photographs
+  const withPhotos = q.get('photos') !== '0' && format !== 'xlsx';
 
   const days = Array.from({ length: span }, (_, i) => new Date(Date.parse(from) + i * 86400000).toISOString().slice(0, 10));
   const { data: lab } = await loadLab();
@@ -85,20 +98,25 @@ export async function GET(request: Request) {
 
   try {
     // Photos dominate the size: step the resolution down until it fits what the host can return
-    let pdf: Uint8Array | null = null;
+    let file: Uint8Array | null = null;
     for (const width of withPhotos ? [1000, 700, 480] : [1000]) {
-      pdf = await buildDailyReportPdf({ days, lab, dept, activity, photos, generated, logos, photoWidth: width });
-      if (pdf.length <= MAX_BYTES) break;
+      const input = { days, lab, dept, activity, photos, generated, logos, photoWidth: width };
+      file = format === 'pdf'
+        ? await buildDailyReportPdf(input)
+        : format === 'docx'
+          ? await renderDocx(buildDailyReportDoc(input), { left: logos.left, right: logos.right }, width)
+          : await renderXlsx(buildDailyReportDoc(input));
+      if (file.length <= MAX_BYTES) break;
     }
-    if (!pdf || pdf.length > MAX_BYTES) {
+    if (!file || file.length > MAX_BYTES) {
       return NextResponse.json({ error: 'This report is too large to download in one go. Choose fewer days, or untick photographs.' }, { status: 413 });
     }
     const name = from === to ? `Daily Plant Report ${ddmmyyyy(from)}` : `Daily Plant Report ${ddmmyyyy(from)} to ${ddmmyyyy(to)}`;
-    return new NextResponse(Buffer.from(pdf), {
-      headers: { 'Content-Type': 'application/pdf', 'Content-Disposition': `inline; filename="${name}.pdf"`, 'Cache-Control': 'private, no-store' },
+    return new NextResponse(new Uint8Array(file), {
+      headers: { 'Content-Type': FORMATS[format].mime, 'Content-Disposition': `attachment; filename="${name}.${FORMATS[format].ext}"`, 'Cache-Control': 'private, no-store' },
     });
   } catch (err) {
     console.error('[daily report]', err);
-    return NextResponse.json({ error: 'Could not create the PDF. Please try again.' }, { status: 500 });
+    return NextResponse.json({ error: 'Could not create the file. Please try again.' }, { status: 500 });
   }
 }

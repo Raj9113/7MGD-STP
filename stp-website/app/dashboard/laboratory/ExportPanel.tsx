@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { fetchFile, saveBlob } from '@/lib/download';
 import LoadingOverlay from '../LoadingOverlay';
+import FormatPicker, { FORMAT_INFO, type Format } from '../FormatPicker';
 
 interface ExportPanelProps {
   month: string;
@@ -30,59 +31,47 @@ const longDate = (iso: string) =>
 
 export default function ExportPanel({ month, monthLabel, selectedDay, firstDate, lastDate }: ExportPanelProps) {
   const [mode, setMode] = useState<Mode>(selectedDay ? 'day' : 'month');
+  const [format, setFormat] = useState<Format>('docx');
   const [from, setFrom] = useState(selectedDay ?? `${month}-01`);
   const [to, setTo] = useState(selectedDay ?? lastDate);
   const [photos, setPhotos] = useState(true);
-  const [busy, setBusy] = useState<'excel' | 'word' | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const monthEnd = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5, 7)), 0)).toISOString().slice(0, 10);
   const range: [string, string] =
     mode === 'day' ? [selectedDay ?? from, selectedDay ?? from] : mode === 'month' ? [`${month}-01`, monthEnd] : [from, to];
-  const invalid = mode === 'range' && (!from || !to || to < from);
+  const badDates = mode === 'range' && (!from || !to || to < from);
+  // An Excel sheet is one month of the lab workbook
+  const crossMonth = format === 'xlsx' && mode === 'range' && !badDates && from.slice(0, 7) !== to.slice(0, 7);
+  const invalid = badDates || crossMonth;
 
-  async function run(kind: 'excel' | 'word') {
+  async function download() {
     setError(null);
-    setBusy(kind);
+    setBusy(true);
     try {
-      const url = kind === 'excel'
-        ? `/api/lab/export/excel?month=${month}`
-        : `/api/lab/export/word?from=${range[0]}&to=${range[1]}&photos=${photos ? 1 : 0}`;
+      const url =
+        format === 'xlsx'
+          ? mode === 'month' ? `/api/lab/export/excel?month=${month}` : `/api/lab/export/excel?from=${range[0]}&to=${range[1]}`
+          : `/api/lab/export/${format === 'pdf' ? 'pdf' : 'word'}?from=${range[0]}&to=${range[1]}&photos=${photos ? 1 : 0}`;
       const { blob, name } = await fetchFile(url);
-      saveBlob(blob, name ?? (kind === 'excel' ? `Lab Report ${month}.xlsx` : `Lab Report ${range[0]}.docx`));
+      saveBlob(blob, name ?? `Lab Report ${range[0]}${FORMAT_INFO[format].ext}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'The download failed. Please try again.');
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm" aria-label="Download reports">
-      <LoadingOverlay show={busy !== null} text={busy === 'excel' ? 'Preparing the Excel file…' : 'Preparing the Word file…'} />
+      <LoadingOverlay show={busy} text={FORMAT_INFO[format].busy} />
       <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-gray-500">⬇ Download reports</h3>
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Excel */}
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-          <p className="text-sm font-bold text-green-800">📗 Excel — monthly sheet</p>
-          <p className="mt-1 text-xs text-green-700">All days of <b>{monthLabel}</b> in the lab workbook’s sheet format, with averages.</p>
-          <button
-            id="lab-download-excel"
-            type="button"
-            onClick={() => run('excel')}
-            disabled={busy !== null}
-            className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-green-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-700 disabled:opacity-60"
-          >
-            {busy === 'excel' ? 'Preparing…' : `Download ${monthLabel} (.xlsx)`}
-          </button>
-        </div>
 
-        {/* Word */}
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-bold text-blue-800">📘 Word — daily reports</p>
-          <p className="mt-1 text-xs text-blue-700">One page per day with limits, sample photos and power reading. Choose the days:</p>
-
-          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Which days">
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="mt-3">
+          <p className="text-xs font-medium text-gray-600">Which days</p>
+          <div className="mt-1 flex flex-wrap gap-2" role="group" aria-label="Which days">
             {MODES.map((m) => {
               const disabled = m.key === 'day' && !selectedDay;
               return (
@@ -100,44 +89,54 @@ export default function ExportPanel({ month, monthLabel, selectedDay, firstDate,
               );
             })}
           </div>
+        </div>
 
-          {mode === 'range' && (
-            <div className="mt-3 flex flex-wrap items-end gap-3">
-              <label className="text-xs font-medium text-gray-600">
-                From
-                <input type="date" id="lab-word-from" value={from} min={firstDate} max={lastDate} onChange={(e) => setFrom(e.target.value)} className={`${dateInput} mt-1 block`} />
-              </label>
-              <label className="text-xs font-medium text-gray-600">
-                To
-                <input type="date" id="lab-word-to" value={to} min={from || firstDate} max={lastDate} onChange={(e) => setTo(e.target.value)} className={`${dateInput} mt-1 block`} />
-              </label>
-            </div>
-          )}
+        {mode === 'range' && (
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <label className="text-xs font-medium text-gray-600">
+              From
+              <input type="date" id="lab-export-from" value={from} min={firstDate} max={lastDate} onChange={(e) => setFrom(e.target.value)} className={`${dateInput} mt-1 block`} />
+            </label>
+            <label className="text-xs font-medium text-gray-600">
+              To
+              <input type="date" id="lab-export-to" value={to} min={from || firstDate} max={lastDate} onChange={(e) => setTo(e.target.value)} className={`${dateInput} mt-1 block`} />
+            </label>
+          </div>
+        )}
 
-          <p className="mt-3 text-sm text-gray-700">
-            {invalid
-              ? 'Choose a valid From and To date.'
-              : range[0] === range[1]
-                ? <>Report for <b>{longDate(range[0])}</b></>
-                : <>Reports from <b>{longDate(range[0])}</b> to <b>{longDate(range[1])}</b></>}
-          </p>
+        <div className="mt-3">
+          <FormatPicker value={format} onChange={setFormat} disabled={busy} />
+        </div>
 
+        <p className="mt-3 text-sm text-gray-700">
+          {badDates
+            ? 'Choose a valid From and To date.'
+            : crossMonth
+              ? 'An Excel sheet covers one month: choose dates inside one month, or pick Word / PDF.'
+              : mode === 'month'
+                ? <>Report for <b>{monthLabel}</b></>
+                : range[0] === range[1]
+                  ? <>Report for <b>{longDate(range[0])}</b></>
+                  : <>Reports from <b>{longDate(range[0])}</b> to <b>{longDate(range[1])}</b></>}
+        </p>
+
+        {format !== 'xlsx' && (
           <label className="mt-2 flex items-center gap-2 text-sm text-gray-700">
             <input type="checkbox" checked={photos} onChange={(e) => setPhotos(e.target.checked)} className="h-4 w-4 accent-[#0062b8]" />
             Include photographs
           </label>
+        )}
 
-          <button
-            id="lab-download-word"
-            type="button"
-            onClick={() => run('word')}
-            disabled={busy !== null || invalid}
-            className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-[#0062b8] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#004f96] disabled:opacity-60"
-          >
-            {busy === 'word' ? 'Preparing…' : 'Download Word (.docx)'}
-          </button>
-          <p className="mt-2 text-xs text-gray-400">Up to 31 days at a time. Days without readings are skipped.</p>
-        </div>
+        <button
+          id="lab-download"
+          type="button"
+          onClick={download}
+          disabled={busy || invalid}
+          className="mt-3 inline-flex h-10 items-center gap-2 rounded-lg bg-[#0062b8] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#004f96] disabled:opacity-60"
+        >
+          {busy ? 'Preparing…' : `⬇ Download ${FORMAT_INFO[format].label} (${FORMAT_INFO[format].ext})`}
+        </button>
+        <p className="mt-2 text-xs text-gray-400">Up to 31 days at a time. Days without readings are skipped (Excel lists every date in the sheet).</p>
       </div>
 
       {error && (
