@@ -1,0 +1,12 @@
+{
+  "appId": "in.stp.sonia7mgd",
+  "appName": "7 MGD STP",
+  "webDir": "www",
+  "server": {
+    "url": "https://7-mgd-stp.vercel.app",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

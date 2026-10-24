@@ -91,6 +91,7 @@ Server actions in `stp-website/app/actions/`: `registration`, `role-request`, `u
 ```
 7MGD-STP/
 ├── README.md                 <- you are here
+├── android-app/              <- Capacitor Android wrapper around the website
 ├── camera-relay/             <- RTSP -> HLS relay (Express + FFmpeg)
 │   ├── server.js
 │   └── .env.example
@@ -156,6 +157,15 @@ Endpoints: `/stream/stream.m3u8` (HLS) and `/health`. FFmpeg restarts automatica
 
 > **Known gap:** the dashboard player requests `/cam12`, `/cam14`, `/cam26` and `/cam2` under `CAMERA_HLS_URL`, but the committed `server.js` serves a single stream at `/stream/stream.m3u8`. The multi-camera relay appears to run from a separate script (possibly the bundled `camera-relay.zip`); consider committing it.
 
+### 3. Android app
+```bash
+cd android-app
+npm install
+npx cap sync android
+npx cap open android     # opens Android Studio: Build > Build APK(s)
+```
+`android-app/` is a Capacitor wrapper that loads the deployed site (`server.url` in `capacitor.config.json`, currently `https://7-mgd-stp.vercel.app`) in a native WebView, so website updates reach the app without a new APK. Needs Android Studio (JDK 17+) to build. App id: `in.stp.sonia7mgd`.
+
 ## Scripts (`stp-website`)
 
 | Command | Does |
@@ -189,6 +199,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Android app added:** `android-app/` wraps the website with Capacitor (see *Android app* above).
 - **Laboratory chemicals & consumables stock added to the Housekeeping report** (55 items copied from the U.K. Scientific Industries register of 27-07-2026: received / used so far / balance). Balance is worked out for you (received minus used), a reorder level can be set per item and turns the balance red; derived values now also work in table rows of the entry form. The Laboratory page and its form are unchanged.
 - **Mechanical, Electrical and Housekeeping reports redesigned from the plant's equipment list** (work performance certificate, Annexure A): `lib/dept-report/defs/{mechanical,electrical,housekeeping,common}.ts`. Mechanical is organised by process unit (12 MGD WWPS pumps / valves / screens / wet well; 7 MGD WWTP screens, grit, sluice gates, anaerobic-anoxic tanks, IFAS aeration tanks, turbo blowers, diffusers, tube settlers, disc filters, UV banks, RAS / WAS pumps, flow meters) with bearing temperature, vibration, current, run hours and condition checks; Electrical covers the 11 kV supply, VCB, 2 x 1250 kVA transformers, PMCC, MCC-1 to 5, 10 VFDs, SCADA, rooms inspection and alarms; Housekeeping has area-wise shift rounds, waste and sludge disposal, sanitation, greenery, pest control, safety checks, consumables and PPE. Mechanical and Electrical also get a preventive maintenance schedule, breakdown / work orders and spares with reorder levels. The entry form has a jump-to-section bar. Reports saved with the old section layouts keep their data in the database, but sections that no longer exist are not shown. The Laboratory is unchanged.
 - **DG set and UPS removed** from the Electrical report (they are not at this plant): form, page, PDF / Word / Excel. Reports saved earlier keep the data in the database but it is no longer shown.
