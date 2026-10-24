@@ -13,8 +13,9 @@ type NativePlugins = {
 };
 
 function nativePlugins(): NativePlugins | null {
-  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: NativePlugins } }).Capacitor;
-  return cap?.isNativePlatform?.() && cap.Plugins?.Filesystem && cap.Plugins.Share ? cap.Plugins : null;
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; registerPlugin?: (name: string) => unknown } }).Capacitor;
+  if (!cap?.isNativePlatform?.() || !cap.registerPlugin) return null;
+  return { Filesystem: cap.registerPlugin('Filesystem'), Share: cap.registerPlugin('Share') } as NativePlugins;
 }
 
 async function shareNative(plugins: NativePlugins, blob: Blob, name: string) {
@@ -31,7 +32,7 @@ async function shareNative(plugins: NativePlugins, blob: Blob, name: string) {
 export function saveBlob(blob: Blob, name: string) {
   const plugins = nativePlugins();
   if (plugins) {
-    void shareNative(plugins, blob, name).catch(() => {});
+    void shareNative(plugins, blob, name).catch((e) => window.alert(`Could not open the file: ${e instanceof Error ? e.message : String(e)}`));
     return;
   }
   const a = document.createElement('a');
