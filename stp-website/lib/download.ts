@@ -1,3 +1,5 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
 export async function fetchFile(url: string): Promise<{ blob: Blob; name: string | null }> {
   const res = await fetch(url);
   if (!res.ok) {
@@ -12,16 +14,10 @@ type NativePlugins = {
   Share: { share(o: { title?: string; files: string[] }): Promise<unknown> };
 };
 
-type CapacitorGlobal = { isNativePlatform?: () => boolean; registerPlugin?: (name: string) => unknown };
-
-const capacitor = () => (window as unknown as { Capacitor?: CapacitorGlobal }).Capacitor;
-const inWebView = () => /; wv\)/.test(navigator.userAgent);
-
-function nativePlugins(): NativePlugins | null {
-  const cap = capacitor();
-  if (!cap?.registerPlugin || !(cap.isNativePlatform?.() || inWebView())) return null;
-  return { Filesystem: cap.registerPlugin('Filesystem'), Share: cap.registerPlugin('Share') } as NativePlugins;
-}
+const nativePlugins = (): NativePlugins | null =>
+  Capacitor.isNativePlatform()
+    ? { Filesystem: registerPlugin('Filesystem'), Share: registerPlugin('Share') } as NativePlugins
+    : null;
 
 async function shareNative(plugins: NativePlugins, blob: Blob, name: string) {
   const data = await new Promise<string>((resolve, reject) => {
@@ -36,10 +32,6 @@ async function shareNative(plugins: NativePlugins, blob: Blob, name: string) {
 
 export function saveBlob(blob: Blob, name: string) {
   const plugins = nativePlugins();
-  if (!plugins && inWebView()) {
-    window.alert('This app build cannot save files. Install the latest APK.');
-    return;
-  }
   if (plugins) {
     void shareNative(plugins, blob, name).catch((e) => window.alert(`Could not open the file: ${e instanceof Error ? e.message : String(e)}`));
     return;
