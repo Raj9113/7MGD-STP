@@ -199,6 +199,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Notch / status bar in the Android app:** the page uses `viewport-fit=cover` with safe-area padding (`app/globals.css`), and the app window and status bar are the brand blue so there is no black strip. Rebuild the APK after pulling this.
 - **Scroll to top / bottom buttons:** floating up/down buttons appear on any dashboard page long enough to scroll (`app/dashboard/ScrollButtons.tsx`).
 - **Pull down to refresh:** dragging the page down from the top on a touch device reloads it (`app/dashboard/PullToRefresh.tsx`).
 - **Centred loader and photo viewer:** page loading now shows a single spinner in the centre of the screen (`app/dashboard/Spinner.tsx`). Sample / OLMS photos open in an in-page viewer with a close (×) button, and the phone back button closes it instead of leaving the app (`app/dashboard/laboratory/PhotoGallery.tsx`).
