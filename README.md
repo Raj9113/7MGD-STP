@@ -199,6 +199,8 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Scroll to top / bottom buttons:** floating up/down buttons appear on any dashboard page long enough to scroll (`app/dashboard/ScrollButtons.tsx`).
+- **Pull down to refresh:** dragging the page down from the top on a touch device reloads it (`app/dashboard/PullToRefresh.tsx`).
 - **Centred loader and photo viewer:** page loading now shows a single spinner in the centre of the screen (`app/dashboard/Spinner.tsx`). Sample / OLMS photos open in an in-page viewer with a close (×) button, and the phone back button closes it instead of leaving the app (`app/dashboard/laboratory/PhotoGallery.tsx`).
 - **Downloads in the Android app:** inside the app, PDF/Word/Excel files are saved to cache and opened in the Android share sheet (`lib/download.ts`, Capacitor Filesystem + Share plugins in `android-app/`). Rebuild the APK after pulling this.
 - **Android app added:** `android-app/` wraps the website with Capacitor (see *Android app* above).

@@ -4,6 +4,8 @@ import { Suspense, useState } from 'react';
 import DashboardNav from './DashboardNav';
 import DashboardSidebar from './DashboardSidebar';
 import NavProgress from './NavProgress';
+import PullToRefresh from './PullToRefresh';
+import ScrollButtons from './ScrollButtons';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -27,6 +29,8 @@ export default function DashboardShell({
       <Suspense fallback={null}>
         <NavProgress />
       </Suspense>
+      <PullToRefresh />
+      <ScrollButtons />
       <DashboardNav
         email={email}
         fullName={fullName}
