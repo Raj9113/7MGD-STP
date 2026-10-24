@@ -7,7 +7,33 @@ export async function fetchFile(url: string): Promise<{ blob: Blob; name: string
   return { blob: await res.blob(), name: /filename="([^"]+)"/.exec(res.headers.get('content-disposition') ?? '')?.[1] ?? null };
 }
 
+type NativePlugins = {
+  Filesystem: { writeFile(o: { path: string; data: string; directory: string }): Promise<{ uri: string }> };
+  Share: { share(o: { title?: string; files: string[] }): Promise<unknown> };
+};
+
+function nativePlugins(): NativePlugins | null {
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: NativePlugins } }).Capacitor;
+  return cap?.isNativePlatform?.() && cap.Plugins?.Filesystem && cap.Plugins.Share ? cap.Plugins : null;
+}
+
+async function shareNative(plugins: NativePlugins, blob: Blob, name: string) {
+  const data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+  const { uri } = await plugins.Filesystem.writeFile({ path: name, data, directory: 'CACHE' });
+  await plugins.Share.share({ title: name, files: [uri] });
+}
+
 export function saveBlob(blob: Blob, name: string) {
+  const plugins = nativePlugins();
+  if (plugins) {
+    void shareNative(plugins, blob, name).catch(() => {});
+    return;
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;

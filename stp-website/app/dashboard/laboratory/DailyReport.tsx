@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import PhotoGallery from './PhotoGallery';
 import {
   PARAM, dayLabel, fmt, fmtFlow, lab, limitStatus, limitText,
   type DayRecord, type DayReport, type LimitStatus, type ParamKey,
@@ -140,23 +141,7 @@ export default function DailyReport({
                 {report.photos.length === 0 ? (
                   <p className="rounded-lg bg-gray-50 p-4 text-sm text-gray-400">No photographs attached to this day’s report.</p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {report.photos.map((p) => (
-                      <a key={p.src} href={p.src} target="_blank" rel="noopener noreferrer" className="group block">
-                        <div className="relative aspect-4/3 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                          <img
-                            src={p.src}
-                            alt={p.kind === 'olms' ? `OLMS analyser display, ${dayLabel(day.date)}` : `Inlet and outlet samples, ${dayLabel(day.date)}`}
-                            loading="lazy"
-                            className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-105"
-                          />
-                        </div>
-                        <p className="mt-1 text-xs text-gray-500 group-hover:text-[#0062b8]">
-                          {p.kind === 'olms' ? 'OLMS analyser display' : 'Inlet & outlet samples'}
-                        </p>
-                      </a>
-                    ))}
-                  </div>
+                  <PhotoGallery photos={report.photos} dateLabel={dayLabel(day.date)} />
                 )}
               </div>
 
