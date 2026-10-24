@@ -199,6 +199,7 @@ Pass every monthly Word report you want shown (each adds that month's daily phot
 
 ## Changelog
 
+- **Android app icon:** the launcher icon is now the AIP logo (white text in a yellow-bordered box on brand blue).
 - **Notch / status bar in the Android app:** the page uses `viewport-fit=cover` with safe-area padding (`app/globals.css`), and the app window and status bar are the brand blue so there is no black strip. Rebuild the APK after pulling this.
 - **Scroll to top / bottom buttons:** floating up/down buttons appear on any dashboard page long enough to scroll (`app/dashboard/ScrollButtons.tsx`).
 - **Pull down to refresh:** dragging the page down from the top on a touch device reloads it (`app/dashboard/PullToRefresh.tsx`).
