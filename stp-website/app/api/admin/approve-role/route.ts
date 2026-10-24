@@ -49,7 +49,6 @@ export async function GET(request: Request) {
     });
   }
 
-  // Update the user's department
   const { error: updateError } = await admin
     .from('profiles')
     .update({ department: roleRequest.requested_department })
@@ -62,13 +61,11 @@ export async function GET(request: Request) {
     });
   }
 
-  // Mark request as approved
   await admin.from('role_requests').update({
     status:      'approved',
     reviewed_at: new Date().toISOString(),
   }).eq('id', roleRequest.id);
 
-  // Log the event
   await logActivity({
     userId:     roleRequest.user_id,
     userName:   roleRequest.user_name,
@@ -79,7 +76,6 @@ export async function GET(request: Request) {
     request,
   });
 
-  // Email the user confirmation
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
   await sendEmail({
     to:      roleRequest.user_email ?? '',

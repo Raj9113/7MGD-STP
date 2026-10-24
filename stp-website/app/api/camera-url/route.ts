@@ -1,13 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
-/**
- * GET /api/camera-url
- *
- * Returns the HLS stream URL only to authenticated users.
- * The CAMERA_HLS_URL env var is server-side only (no NEXT_PUBLIC_ prefix),
- * so it is never exposed in the browser bundle.
- */
 export async function GET() {
   const supabase = await createClient();
   const {

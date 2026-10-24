@@ -4,12 +4,6 @@ import path from 'node:path';
 import { limitStatus, type DayRecord, type DayReport, type ParamKey } from '@/app/dashboard/laboratory/lab';
 import { imageInfo, type ImageKind } from './image';
 
-/**
- * Daily laboratory reports in the lab team's own Word layout. The template (templates/lab/daily-report-template.docx) is
- * one page of their SEP-26 report (header table, parameter table, the two dashed photo frames, power table, footer, page
- * size); every selected day becomes a copy of that page with the values, shading and photographs replaced.
- */
-
 export interface DayPhoto { kind: 'olms' | 'sample'; bytes: Buffer }
 export interface WordDay { day: DayRecord; report?: DayReport; photos: DayPhoto[] }
 
@@ -21,8 +15,6 @@ const NORMAL_TEXT = '333333';
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const setText = (cell: string, text: string) => cell.replace(/<w:t(?: [^>]*)?>[^<]*<\/w:t>/, `<w:t>${esc(text)}</w:t>`);
 
-// ── value formatting, as printed in the lab team's reports ───────────────────
-
 const num = (v: number | null | undefined) => (typeof v === 'number' && Number.isFinite(v) ? String(v) : null);
 
 function paramValues(key: ParamKey | 'flow', d: DayRecord): { in: string; out: string } {
@@ -32,8 +24,6 @@ function paramValues(key: ParamKey | 'flow', d: DayRecord): { in: string; out: s
 }
 
 const fixed2 = (v: number | null | undefined) => (typeof v === 'number' ? v.toFixed(2) : '-');
-
-// ── table helpers ────────────────────────────────────────────────────────────
 
 const mapRows = (tbl: string, fn: (row: string, i: number) => string) => {
   let i = 0;
@@ -46,11 +36,10 @@ const mapCells = (row: string, fn: (cell: string, i: number) => string) => {
 
 function fillParameterTable(tbl: string, d: DayRecord): string {
   return mapRows(tbl, (row, r) => {
-    if (r === 0) return row; // header row
+    if (r === 0) return row;
     const key = ROW_KEYS[r - 1];
     const v = paramValues(key, d);
     const baseFill = row.match(/w:fill="([0-9A-Fa-f]{6})"/)![1];
-    // the lab report shades an outlet value that is above the permissible limit
     const exceeded = key !== 'flow' && limitStatus(key, d[key]?.out) !== 'ok' && limitStatus(key, d[key]?.out) !== 'na';
     return mapCells(row, (cell, c) => {
       if (c === 2) return setText(cell, v.in);
@@ -73,16 +62,12 @@ function fillPowerTable(tbl: string, p: DayReport['power']): string {
   return mapRows(tbl, (row, r) => {
     const v = values[r];
     if (!v) return row;
-    // row 1: label + open / close / difference; row 3: total reading / multiplication factor / total unit / P.F.
     return mapCells(row, (cell, c) => (r === 1 ? (c === 0 ? cell : setText(cell, v[c - 1])) : setText(cell, v[c])));
   });
 }
 
-// ── photographs ──────────────────────────────────────────────────────────────
-
 interface Placed { rid: string; ext: ImageKind; bytes: Buffer }
 
-/** Fit an image inside the template picture's box (keeping its proportions) and centre it there */
 function placePhoto(drawing: string, photo: DayPhoto, rid: string): string {
   const info = imageInfo(photo.bytes)!;
   const ext = drawing.match(/<wp:extent cx="(\d+)" cy="(\d+)"/)!;
@@ -102,19 +87,16 @@ function placePhoto(drawing: string, photo: DayPhoto, rid: string): string {
 
 function fillPhotos(page: string, photos: DayPhoto[], nextRid: () => string, placed: Placed[]): string {
   return page.replace(/<w:drawing>(?:(?!<\/w:drawing>)[\s\S])*?<\/w:drawing>/g, (drawing) => {
-    if (!drawing.includes('<pic:pic')) return drawing; // the dashed photo frames stay as they are
-    // In the template the OLMS picture sits in the left frame and the sample picture in the right one
+    if (!drawing.includes('<pic:pic')) return drawing;
     const left = Number(drawing.match(/<wp:positionH relativeFrom="margin"><wp:posOffset>(-?\d+)/)![1]) < 1_000_000;
     const photo = photos.find((p) => p.kind === (left ? 'olms' : 'sample'));
     const info = photo && imageInfo(photo.bytes);
-    if (!photo || !info) return ''; // no photo that day: leave the frame empty
+    if (!photo || !info) return '';
     const rid = nextRid();
     placed.push({ rid, ext: info.kind, bytes: photo.bytes });
     return placePhoto(drawing, photo, rid);
   });
 }
-
-// ── one page ─────────────────────────────────────────────────────────────────
 
 function fillPage(template: string, wd: WordDay, nextRid: () => string, placed: Placed[]): string {
   const [y, m, d] = wd.day.date.split('-');
@@ -128,7 +110,6 @@ function fillPage(template: string, wd: WordDay, nextRid: () => string, placed: 
 
 export class ExportTooLarge extends Error {}
 
-/** Photos are re-encoded smaller when a download would otherwise exceed what the host can return (Vercel: 4.5 MB). */
 async function shrink(photos: DayPhoto[]): Promise<DayPhoto[]> {
   try {
     const sharp = (await import('sharp')).default;
@@ -136,7 +117,7 @@ async function shrink(photos: DayPhoto[]): Promise<DayPhoto[]> {
       photos.map(async (p) => ({ ...p, bytes: await sharp(p.bytes).rotate().resize({ width: 900, withoutEnlargement: true }).jpeg({ quality: 62 }).toBuffer() })),
     );
   } catch {
-    return photos; // sharp not available: keep the originals
+    return photos;
   }
 }
 
@@ -153,10 +134,9 @@ export async function buildDailyReports(days: WordDay[], maxBytes = 4_300_000): 
     const placed: Placed[] = [];
     let n = 0;
     const pages = items.map((wd) => fillPage(pageTemplate, wd, () => `rIdLabPhoto${++n}`, placed));
-    pages[pages.length - 1] = pages[pages.length - 1].replace(/<w:p [^>]*><w:r><w:br w:type="page"\/><\/w:r><\/w:p>$/, ''); // no blank last page
+    pages[pages.length - 1] = pages[pages.length - 1].replace(/<w:p [^>]*><w:r><w:br w:type="page"\/><\/w:r><\/w:p>$/, '');
 
     let body = pages.join('');
-    // Unique drawing ids; and drop the optional Word revision ids, which would be duplicated by the copies
     let id = 1000;
     body = body.replace(/<wp:docPr id="\d+"/g, () => `<wp:docPr id="${++id}"`).replace(/ (?:w14:paraId|w14:textId|wp14:anchorId|wp14:editId)="[0-9A-F]+"/g, '');
 
@@ -194,4 +174,3 @@ export async function buildDailyReports(days: WordDay[], maxBytes = 4_300_000): 
   }
   return result;
 }
-

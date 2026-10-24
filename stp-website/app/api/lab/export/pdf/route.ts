@@ -9,12 +9,8 @@ import type { DayPhotoBytes } from '@/lib/daily-report/build';
 import { buildLabDoc } from '@/lib/daily-report/doc';
 import { renderPdf } from '@/lib/report-doc/pdf';
 
-const MAX_BYTES = 4_300_000; // what the host can return in one response (Vercel: 4.5 MB)
+const MAX_BYTES = 4_300_000;
 
-/**
- * GET /api/lab/export/pdf?from=2026-09-10&to=2026-09-15&photos=1
- * One page per day (days that have lab readings): limits table, sample photos and the energy-meter reading.
- */
 export async function GET(request: Request) {
   const denied = await requireLabViewer();
   if (denied) return denied;

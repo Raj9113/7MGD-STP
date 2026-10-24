@@ -48,13 +48,11 @@ export async function GET(request: Request) {
     });
   }
 
-  // Mark as rejected
   await admin.from('registration_requests').update({
     status:      'rejected',
     reviewed_at: new Date().toISOString(),
   }).eq('id', regRequest.id);
 
-  // Notify the user
   const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER ?? '';
   await sendEmail({
     to:      regRequest.email,

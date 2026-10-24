@@ -5,21 +5,18 @@ import { logActivity } from '@/lib/supabase/logger';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
-  // Supabase can send either a PKCE `code` or a legacy `token_hash` + `type`
   const code       = searchParams.get('code');
   const tokenHash  = searchParams.get('token_hash');
-  const type       = searchParams.get('type');           // 'invite' | 'recovery' | 'email' | null
+  const type       = searchParams.get('type');
   const next       = searchParams.get('next') ?? '/dashboard';
 
   const supabase = await createClient();
   let sessionError: string | null = null;
 
-  // ── PKCE flow (code) ───────────────────────────────────────────────────────
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) sessionError = error.message;
   }
-  // ── Legacy token_hash flow (invite / recovery emails) ─────────────────────
   else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
@@ -27,8 +24,6 @@ export async function GET(request: Request) {
     });
     if (error) sessionError = error.message;
   } else {
-    // Supabase invite links use the implicit flow: the session arrives in the URL #fragment, which the server never sees.
-    // Browsers keep the fragment across a redirect, so hand over to the set-password page, whose browser client reads it.
     return NextResponse.redirect(`${origin}/auth/set-password`);
   }
 
@@ -37,18 +32,15 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
   }
 
-  // ── Session established — decide where to send the user ───────────────────
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
   }
 
-  // If this is an invite or password-recovery, send user to set-password page
   const isSettingPassword = type === 'invite' || type === 'recovery';
   const destination = isSettingPassword ? '/auth/set-password' : next;
 
-  // Log the event (fire-and-forget)
   try {
     const { data: profile } = await supabase
       .from('profiles')
@@ -68,7 +60,6 @@ export async function GET(request: Request) {
       request,
     });
   } catch {
-    // Never block redirect for a logging failure
   }
 
   return NextResponse.redirect(`${origin}${destination}`);

@@ -16,13 +16,11 @@ export default function ForgotPasswordPage() {
     setError(null);
     setLoading(true);
 
-    // The email link returns through /auth/callback, which signs the user in and opens the set-password page
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
       redirectTo: `${window.location.origin}/auth/callback?next=/auth/set-password`,
     });
 
     setLoading(false);
-    // Do not reveal whether the address has an account; only report real failures (rate limit, mail service)
     if (resetError && resetError.status !== 400) {
       setError(resetError.message);
       return;

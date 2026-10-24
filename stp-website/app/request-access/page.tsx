@@ -46,7 +46,6 @@ export default function RequestAccessPage() {
 
       <div className="relative z-10 w-full max-w-lg bg-white rounded-2xl border-2 border-[#ffcc00] shadow-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="bg-[#0062b8] p-8 flex flex-col items-center justify-center border-b-2 border-[#ffcc00]">
           <div className="border-2 border-[#ffcc00] rounded-xl px-8 py-2 mb-3 shadow-md">
             <h1 className="text-white text-6xl font-extrabold tracking-wide">AIP</h1>
@@ -57,7 +56,6 @@ export default function RequestAccessPage() {
           <p className="text-[#fde68a] text-sm mt-2">Request Portal Access</p>
         </div>
 
-        {/* Form */}
         <div className="p-8">
           <h3 className="text-xl font-bold text-gray-800 mb-1 text-center">Request Account Access</h3>
           <p className="text-sm text-gray-500 text-center mb-6 leading-relaxed">
@@ -73,7 +71,6 @@ export default function RequestAccessPage() {
           <form action={action} className="space-y-4">
             <LoadingOverlay show={pending} text="Submitting your request…" />
 
-            {/* Full Name */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
               <input
@@ -87,7 +84,6 @@ export default function RequestAccessPage() {
               />
             </div>
 
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
               <input
@@ -101,7 +97,6 @@ export default function RequestAccessPage() {
               />
             </div>
 
-            {/* Department */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
               <select
@@ -120,7 +115,6 @@ export default function RequestAccessPage() {
               </select>
             </div>
 
-            {/* Employee ID */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID <span className="text-gray-400">(optional)</span></label>
               <input
@@ -133,7 +127,6 @@ export default function RequestAccessPage() {
               />
             </div>
 
-            {/* Notes */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Notes <span className="text-gray-400">(optional)</span></label>
               <textarea
@@ -146,7 +139,6 @@ export default function RequestAccessPage() {
               />
             </div>
 
-            {/* Submit */}
             <button
               id="req-submit-btn"
               type="submit"

@@ -1,8 +1,3 @@
-/**
- * Tiny browser-side store that remembers "a page change is in flight" so the UI can show a loader straight away
- * (server-rendered pages take a moment). Link clicks are caught by <NavProgress/>; code that changes the page itself
- * (dropdowns calling router.push) uses navigate() below.
- */
 type Listener = () => void;
 
 let target: string | null = null;
@@ -18,13 +13,12 @@ export const getNavTarget = () => target;
 
 const key = (u: URL) => u.pathname + u.search;
 
-/** Marks a navigation to `href` as started (ignored when it only changes the #hash or points at the current page). */
 export function startNav(href: string) {
   const to = new URL(href, window.location.href);
   if (to.origin !== window.location.origin || key(to) === window.location.pathname + window.location.search) return;
   target = key(to);
   clearTimeout(timer);
-  timer = setTimeout(endNav, 15000); // never leave the loader stuck (e.g. a redirect elsewhere)
+  timer = setTimeout(endNav, 15000);
   emit();
 }
 

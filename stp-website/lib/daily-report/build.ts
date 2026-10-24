@@ -17,17 +17,13 @@ export interface DayPhotoBytes { kind: 'olms' | 'sample'; bytes: Buffer }
 export interface DeptDayReport { data: DeptData; created_by_name: string | null; updated_by_name: string | null; updated_at: string }
 
 export interface DailyReportInput {
-  /** ISO dates, ascending */
   days: string[];
-  /** File-based history merged with portal entries */
   lab: LabData;
-  /** Mechanical / Electrical / Housekeeping daily reports, keyed `${dept}|${date}` */
   dept: Map<string, DeptDayReport>;
   activity: ActivityRow[];
   photos: Map<string, DayPhotoBytes[]>;
   generated: string;
   logos: Logos;
-  /** Photos are re-encoded to this width (px); smaller = smaller file */
   photoWidth?: number;
 }
 
@@ -81,8 +77,6 @@ export const STATUS_STYLE = (s: ReturnType<typeof limitStatus>): { text: string;
   : s === 'under' ? { text: 'BELOW LIMIT', color: COLORS.bad, bold: true }
   : { text: '-', color: COLORS.muted, bold: false };
 
-// ── images ───────────────────────────────────────────────────────────────────
-
 async function embed(kit: Kit, bytes: Buffer, width: number): Promise<PDFImage | null> {
   try {
     const sharp = (await import('sharp')).default;
@@ -95,8 +89,6 @@ async function embed(kit: Kit, bytes: Buffer, width: number): Promise<PDFImage |
   }
 }
 
-// ── department sections, drawn from their schemas ────────────────────────────
-
 const WEIGHT: Record<string, number> = { name: 2.4, title: 2.6, desc: 2.8, task: 2.2, area: 2.2, destination: 2, remarks: 2.2, point: 2, item: 2.2, model: 2 };
 const weight = (f: Field) => WEIGHT[f.key] ?? (f.type === 'text' ? 1.3 : f.type === 'select' ? 1.15 : f.type === 'date' ? 1.1 : f.type === 'time' ? 0.8 : 0.95);
 export const header = (f: Field) => (f.unit && f.type === 'number' ? `${f.label} (${f.unit})` : f.label);
@@ -105,7 +97,6 @@ export const cellText = (f: Field, v: Row[string] | undefined) => (f.type === 'n
 export const isDone = (sec: Section, r: Row) => !!sec.doneWhen && sec.doneWhen.values.includes(String(r[sec.doneWhen.key] ?? ''));
 export const rowBad = (sec: Section, r: Row) => !isDone(sec, r) && sec.fields.some((f) => (f.status && statusTone(r[f.key]) === 'bad') || f.warn?.(r[f.key], r) === 'bad');
 
-/** Column widths by weight, but never narrower than the longest header word (so headers never break mid-word) */
 function fitColumns(kit: Kit, fields: Field[], size: number): number[] {
   const min = fields.map((f) => Math.max(...header(f).split(' ').map((w) => kit.width(w, size, true))) + 10);
   const total = fields.reduce((a, f) => a + weight(f), 0);
@@ -173,8 +164,6 @@ function deptSections(kit: Kit, schema: DeptSchema, data: DeptData, color: RGB) 
   kit.accent = COLORS.teal;
 }
 
-// ── one day ──────────────────────────────────────────────────────────────────
-
 export interface DayFacts {
   date: string;
   day?: DayRecord;
@@ -209,7 +198,6 @@ export function facts(date: string, input: DailyReportInput): DayFacts {
   };
 }
 
-/** A section with content starts a new page unless a good part of the current one is still free */
 const sectionStart = (kit: Kit, hasData: boolean) => {
   if (hasData && kit.y > PAGE.top + 330) kit.addPage();
   else kit.space(16);
@@ -231,7 +219,6 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
   };
   const attn = (slug: DeptSlug) => attention(SCHEMAS[slug], f.depts[slug]?.data ?? null);
 
-  // 1. Day summary
   kit.addPage();
   kit.text('DAILY PLANT REPORT', { size: 9, bold: true, color: COLORS.muted });
   kit.text(longDay(f.date), { size: 20, bold: true, color: COLORS.blue, gap: 6 });
@@ -272,7 +259,6 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
     { cell: (_r, c, t) => (c === 0 ? { bold: true } : c === 1 ? (t === 'No report entered' || t === 'None' ? { color: COLORS.muted } : { color: COLORS.good, bold: true }) : undefined) },
   );
 
-  // 2. Laboratory
   kit.addPage();
   kit.banner('LABORATORY - daily analysis report', COLORS.teal, f.day ? RECORDED_TAG : NO_DATA_TAG);
   if (!f.day) {
@@ -319,7 +305,6 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
     }
   }
 
-  // 3. Electrical, 4. Mechanical, 5. Housekeeping: from each department's own daily report
   for (const slug of ['electrical', 'mechanical', 'housekeeping'] as DeptSlug[]) {
     const r = f.depts[slug];
     const schema = SCHEMAS[slug];
@@ -340,7 +325,6 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
     }
   }
 
-  // 6. Portal activity
   sectionStart(kit, f.events.length > 0);
   kit.banner('PORTAL ACTIVITY', COLORS.purple, f.events.length ? RECORDED_TAG : NO_DATA_TAG);
   const SHOWN = 60;
@@ -352,8 +336,6 @@ async function dayChapter(kit: Kit, f: DayFacts, input: DailyReportInput) {
   if (f.events.length > SHOWN) kit.text(`... and ${f.events.length - SHOWN} more events (see the activity log in the Admin panel).`, { size: 8, color: COLORS.muted });
   if (f.pageViews) kit.text(`${f.pageViews} page-view events are not listed.`, { size: 8, color: COLORS.muted });
 }
-
-// ── whole document ───────────────────────────────────────────────────────────
 
 export async function buildDailyReportPdf(input: DailyReportInput): Promise<Uint8Array> {
   const kit = await Kit.create(input.logos);

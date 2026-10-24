@@ -2,8 +2,6 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
-  // Guard: if env vars are not set, skip Supabase and pass through
-  // so the app doesn't hard-crash during initial setup
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -12,8 +10,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  // A reset / invite link that Supabase sent to the wrong page (redirect URL not allow-listed) arrives as ?code=...;
-  // forward it to the callback, which signs the user in and opens the set-password page
   const stray = request.nextUrl;
   if (stray.searchParams.has('code') && !stray.pathname.startsWith('/auth/callback')) {
     const cb = stray.clone();
@@ -45,33 +41,27 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired — important for Server Components
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
 
-  // Allow public routes: login, auth callback, set-password, request-access, static assets
   const publicPaths = ['/login', '/auth/callback', '/auth/set-password', '/auth/forgot-password', '/request-access'];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
-  // If user is not logged in and trying to access a protected route → redirect to /login
   if (!user && !isPublicPath) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = '/login';
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user is logged in and trying to access /login → redirect to /dashboard
   if (user && pathname === '/login') {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = '/dashboard';
     return NextResponse.redirect(dashboardUrl);
   }
 
-  // If user has a temp password (must_change_password), redirect to set-password
-  // Skip this check if they're already on set-password to avoid a redirect loop
   if (user && !pathname.startsWith('/auth/set-password')) {
     const { data: profile } = await supabase
       .from('profiles')
@@ -90,12 +80,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static (static files)
-     * - _next/image (image optimization)
-     * - favicon.ico, sitemap.xml, robots.txt
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

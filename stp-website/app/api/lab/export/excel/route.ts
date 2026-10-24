@@ -6,11 +6,6 @@ import { labFileName, readRange } from '@/lib/lab-export/names';
 
 const XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-/**
- * GET /api/lab/export/excel?month=2026-09                   the whole month
- * GET /api/lab/export/excel?from=2026-09-10&to=2026-09-15   a day or custom dates (inside one month)
- * A sheet in the lab team's own Excel layout (see lib/lab-export/excel.ts).
- */
 export async function GET(request: Request) {
   const denied = await requireLabViewer();
   if (denied) return denied;

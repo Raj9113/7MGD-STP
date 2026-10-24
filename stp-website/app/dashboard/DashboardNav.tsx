@@ -45,9 +45,7 @@ export default function DashboardNav({
     <nav className="bg-[#0062b8] shadow-md border-b-2 border-[#ffcc00]">
       <LoadingOverlay show={loggingOut} text="Signing out…" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Left: Hamburger (mobile) + Logo + Title */}
         <div className="flex items-center gap-3">
-          {/* Hamburger — mobile only */}
           <button
             id="sidebar-toggle-btn"
             onClick={onMenuClick}
@@ -67,7 +65,6 @@ export default function DashboardNav({
           </div>
         </div>
 
-        {/* Right: User Info + Logout */}
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
             <p className="text-white text-sm font-semibold leading-tight">{fullName}</p>

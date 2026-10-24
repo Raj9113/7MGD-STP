@@ -6,11 +6,6 @@ import {
   type DailyReportInput, type DayFacts, type DayPhotoBytes,
 } from './build';
 
-/**
- * The daily plant report and the laboratory report as a Doc (see lib/report-doc): the same content the plant PDF draws,
- * in a form the Word and Excel writers (and the generic PDF writer) can render.
- */
-
 const DEPT_HEX: Record<DeptSlug, string> = { mechanical: 'D35400', electrical: 'B9770E', housekeeping: '1E8449' };
 const TEAL = '0E6E6B';
 
@@ -27,9 +22,6 @@ function fieldTone(f: Field, row: Row): Tone | undefined {
 
 const cell = (text: string, tone?: Tone): DocCell => (tone ? { text, tone } : text);
 
-// ── laboratory ───────────────────────────────────────────────────────────────
-
-/** One day of the laboratory report: parameter table, photographs and the energy meter */
 export function labBlocks(date: string, lab: LabData, shots: DayPhotoBytes[], opts: { showEmpty?: boolean } = {}): Block[] {
   const day = lab.months.flatMap((m) => m.days).find((d) => d.date === date);
   const live = lab.live?.[date];
@@ -82,7 +74,6 @@ export function labBlocks(date: string, lab: LabData, shots: DayPhotoBytes[], op
   return out;
 }
 
-/** Laboratory daily reports, one page per day (PDF) */
 export function buildLabDoc(days: string[], lab: LabData, photos: Map<string, DayPhotoBytes[]>, generated: string): Doc {
   const chapters: Chapter[] = days.map((date) => ({
     name: shortDay(date),
@@ -95,8 +86,6 @@ export function buildLabDoc(days: string[], lab: LabData, photos: Map<string, Da
   const range = days.length === 1 ? dayLabel(days[0]) : `${dayLabel(days[0])} to ${dayLabel(days[days.length - 1])}`;
   return { title: '7 MGD STP SONIA VIHAR - Laboratory Report', subtitle: range, generated, chapters };
 }
-
-// ── departments ──────────────────────────────────────────────────────────────
 
 function deptBlocks(schema: DeptSchema, data: DeptData): Block[] {
   const out: Block[] = [];
@@ -129,8 +118,6 @@ function deptBlocks(schema: DeptSchema, data: DeptData): Block[] {
   if (typeof data.remarks === 'string' && data.remarks) out.push({ t: 'h3', text: 'Remarks / observations' }, { t: 'note', text: data.remarks });
   return out;
 }
-
-// ── one day, and the whole report ────────────────────────────────────────────
 
 function dayChapter(f: DayFacts, input: DailyReportInput): Chapter {
   const { lab } = input;

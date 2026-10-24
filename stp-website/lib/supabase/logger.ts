@@ -1,8 +1,3 @@
-/**
- * Activity Logger — server-side only.
- * Inserts a row into `activity_logs` using the service-role client (bypasses RLS).
- * Call this from Server Actions and API Route Handlers.
- */
 import { createAdminClient } from '@/lib/supabase/admin';
 
 export type LogAction =
@@ -23,7 +18,6 @@ export interface LogPayload {
   department?: string | null;
   action: LogAction;
   details?: string | null;
-  /** Pass the raw NextRequest / Request so we can extract IP & User-Agent */
   request?: Request | { headers: Headers };
 }
 
@@ -32,7 +26,6 @@ interface GeoInfo {
   country: string | null;
 }
 
-/** Extract client IP from common headers (works on Vercel & localhost) */
 function extractIp(headers: Headers): string | null {
   return (
     headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -42,14 +35,13 @@ function extractIp(headers: Headers): string | null {
   );
 }
 
-/** Geo-locate an IP using ip-api.com (free, no key, 45 req/min) */
 async function geoLocate(ip: string | null): Promise<GeoInfo> {
   if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
     return { city: 'Localhost', country: 'Local' };
   }
   try {
     const res = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,status`, {
-      signal: AbortSignal.timeout(3000), // 3 s timeout — never block the main request
+      signal: AbortSignal.timeout(3000),
     });
     if (!res.ok) return { city: null, country: null };
     const data = await res.json();
@@ -62,10 +54,6 @@ async function geoLocate(ip: string | null): Promise<GeoInfo> {
   }
 }
 
-/**
- * Log an activity event.
- * This function is fire-and-forget (it does not throw).
- */
 export async function logActivity(payload: LogPayload): Promise<void> {
   try {
     const admin = createAdminClient();
@@ -97,7 +85,6 @@ export async function logActivity(payload: LogPayload): Promise<void> {
       country,
     });
   } catch (err) {
-    // Never let logging break the main request
     console.error('[logActivity] Failed to insert log:', err);
   }
 }

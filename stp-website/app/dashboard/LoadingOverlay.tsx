@@ -1,6 +1,5 @@
 'use client';
 
-/** Full-screen "working" screen: dims the page, blocks clicks and says what is happening (saving, preparing a download…). */
 export default function LoadingOverlay({ show, text = 'Please wait…' }: { show: boolean; text?: string }) {
   if (!show) return null;
   return (

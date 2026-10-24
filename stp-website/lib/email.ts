@@ -1,11 +1,4 @@
-/**
- * Email helper — uses Nodemailer with SMTP.
- * Configure via environment variables (see .env.local).
- * Fails gracefully if SMTP is not configured.
- */
 import nodemailer from 'nodemailer';
-
-// ── Transporter ───────────────────────────────────────────────────────────────
 
 function createTransporter() {
   const host = process.env.SMTP_HOST;
@@ -25,8 +18,6 @@ function createTransporter() {
     auth: { user, pass },
   });
 }
-
-// ── Send Helper ───────────────────────────────────────────────────────────────
 
 interface SendEmailOptions {
   to: string;
@@ -48,8 +39,6 @@ export async function sendEmail(opts: SendEmailOptions): Promise<boolean> {
     return false;
   }
 }
-
-// ── Shared Styles ─────────────────────────────────────────────────────────────
 
 const BASE_STYLE = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -108,8 +97,6 @@ function footer() {
   `;
 }
 
-// ── Template: Admin — New Registration Request ────────────────────────────────
-
 export function buildAdminRegistrationRequestEmail(opts: {
   fullName: string;
   email: string;
@@ -145,8 +132,6 @@ export function buildAdminRegistrationRequestEmail(opts: {
     </body>
   `;
 }
-
-// ── Template: User — Account Approved (with temp password) ────────────────────
 
 export function buildUserApprovedEmail(opts: {
   fullName: string;
@@ -184,8 +169,6 @@ export function buildUserApprovedEmail(opts: {
   `;
 }
 
-// ── Template: User — Registration Rejected ────────────────────────────────────
-
 export function buildUserRejectedEmail(opts: { fullName: string; adminEmail: string }): string {
   return `
     <body style="${BASE_STYLE}">
@@ -207,8 +190,6 @@ export function buildUserRejectedEmail(opts: { fullName: string; adminEmail: str
     </body>
   `;
 }
-
-// ── Template: Admin — New Role Promotion Request ──────────────────────────────
 
 export function buildAdminRoleRequestEmail(opts: {
   userName: string;
@@ -243,8 +224,6 @@ export function buildAdminRoleRequestEmail(opts: {
     </body>
   `;
 }
-
-// ── Template: User — Role Approved ───────────────────────────────────────────
 
 export function buildUserRoleApprovedEmail(opts: {
   userName: string;

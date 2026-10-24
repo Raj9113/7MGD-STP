@@ -2,7 +2,6 @@
 
 import { useState, type InputHTMLAttributes } from 'react';
 
-/** A password box with an eye button that shows / hides what was typed */
 export default function PasswordInput({ className = '', ...props }: Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>) {
   const [show, setShow] = useState(false);
   return (

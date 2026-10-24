@@ -1,8 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { DeptData, DeptSlug } from './schema';
 
-/** Server-only: reads the daily department reports (table `dept_daily`). Callers must already have checked the user's role. */
-
 export interface StoredReport {
   dept: DeptSlug;
   date: string;
@@ -34,19 +32,15 @@ async function run<T>(empty: T, fn: (db: ReturnType<typeof createAdminClient>) =
 export const loadReport = (dept: DeptSlug, date: string) =>
   run<StoredReport | null>(null, (db) => db.from('dept_daily').select(COLUMNS).eq('dept', dept).eq('date', date).maybeSingle(), (d) => (d as StoredReport | null) ?? null);
 
-/** Dates that have a report, newest first */
 export const loadDates = (dept: DeptSlug, limit = 366) =>
   run<string[]>([], (db) => db.from('dept_daily').select('date').eq('dept', dept).order('date', { ascending: false }).limit(limit), (d) => ((d as { date: string }[]) ?? []).map((r) => r.date));
 
-/** The report just before a date (what tomorrow's blank form starts from) */
 export const loadPrevious = (dept: DeptSlug, date: string) =>
   run<StoredReport | null>(null, (db) => db.from('dept_daily').select(COLUMNS).eq('dept', dept).lt('date', date).order('date', { ascending: false }).limit(1).maybeSingle(), (d) => (d as StoredReport | null) ?? null);
 
-/** Every report of one department in a period, oldest first */
 export const loadRange = (dept: DeptSlug, from: string, to: string) =>
   run<StoredReport[]>([], (db) => db.from('dept_daily').select(COLUMNS).eq('dept', dept).gte('date', from).lte('date', to).order('date', { ascending: true }), (d) => (d as StoredReport[]) ?? []);
 
-/** All three departments in a period, as { 'mechanical|2026-09-15': report } */
 export async function loadAllRange(from: string, to: string): Promise<Loaded<Map<string, StoredReport>>> {
   const out = new Map<string, StoredReport>();
   const res = await run<StoredReport[]>([], (db) => db.from('dept_daily').select(COLUMNS).gte('date', from).lte('date', to).order('date', { ascending: true }).limit(5000), (d) => (d as StoredReport[]) ?? []);
@@ -54,7 +48,6 @@ export async function loadAllRange(from: string, to: string): Promise<Loaded<Map
   return { value: out, setupNeeded: res.setupNeeded };
 }
 
-/** The latest report of each department on or before a date (for the overview cards) */
 export async function loadLatestEach(onOrBefore: string): Promise<Partial<Record<DeptSlug, StoredReport>>> {
   const out: Partial<Record<DeptSlug, StoredReport>> = {};
   await Promise.all((['mechanical', 'electrical', 'housekeeping'] as DeptSlug[]).map(async (dept) => {

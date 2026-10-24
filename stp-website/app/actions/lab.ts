@@ -22,7 +22,6 @@ export interface SaveLabState {
 
 interface StoredPhoto { kind: PhotoKind; path: string }
 
-/** The signed-in user, only if they may enter lab reports (Laboratory role or Admin). */
 async function assertLabEditor() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -52,7 +51,6 @@ export async function saveLabEntry(_prev: SaveLabState, formData: FormData): Pro
       return { success: false, message: 'Please correct the highlighted fields.', errors: parsed.errors };
     }
 
-    // Photos: validate before touching storage
     const uploads: { kind: PhotoKind; file: File; ext: string }[] = [];
     for (const kind of PHOTO_KINDS) {
       const f = formData.get(`photo_${kind}`);
@@ -80,7 +78,6 @@ export async function saveLabEntry(_prev: SaveLabState, formData: FormData): Pro
       };
     }
 
-    // Upload new photos (replacing the same day's earlier ones)
     const month = parsed.date.slice(0, 7);
     const day = parsed.date.slice(8, 10);
     const photos: StoredPhoto[] = ((existing?.photos ?? []) as StoredPhoto[]).filter((p) => PHOTO_KINDS.includes(p.kind));

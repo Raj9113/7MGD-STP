@@ -8,7 +8,6 @@ export const FORMAT_INFO: Record<Format, { label: string; icon: string; ext: str
   xlsx: { label: 'Excel', icon: '📗', ext: '.xlsx', busy: 'Preparing the Excel file…' },
 };
 
-/** "Download as" choice used by every download in the portal */
 export default function FormatPicker({
   value, onChange, formats = ['pdf', 'docx', 'xlsx'], disabled = false,
 }: { value: Format; onChange: (f: Format) => void; formats?: Format[]; disabled?: boolean }) {

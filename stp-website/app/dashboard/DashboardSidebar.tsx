@@ -47,7 +47,6 @@ export default function DashboardSidebar({ role, onNavigate }: DashboardSidebarP
         })}
       </nav>
 
-      {/* Request Role Change — for non-admin users */}
       {role !== 'Admin' && (
         <div className="px-3 pb-2">
           <Link
@@ -65,7 +64,6 @@ export default function DashboardSidebar({ role, onNavigate }: DashboardSidebarP
         </div>
       )}
 
-      {/* Role badge at bottom */}
       <div className="p-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">Logged in as</span>
@@ -92,4 +90,3 @@ export default function DashboardSidebar({ role, onNavigate }: DashboardSidebarP
     </aside>
   );
 }
-

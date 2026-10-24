@@ -65,7 +65,6 @@ export function QualityCards({ summaries }: { summaries: Record<string, ParamSum
         const out = s?.outAvg;
         const over = limit?.max !== undefined && out !== null && out !== undefined && out > limit.max;
         const dayRatio = s && s.daysChecked ? s.daysOk / s.daysChecked : null;
-        // Bar: the dashed tick marks the limit; the fill shows where the monthly average outlet sits against it.
         const fill = limit?.max && out ? Math.min(out / limit.max, 1.5) / 1.5 : 0;
         return (
           <div key={key} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">

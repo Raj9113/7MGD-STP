@@ -8,7 +8,6 @@ import { headers } from 'next/headers';
 
 const VALID_DEPARTMENTS = ['Mechanical', 'Electrical', 'Housekeeping', 'Laboratory', 'Admin', 'Viewer'];
 
-/** Verify that the currently logged-in user is an Admin. Returns the caller's user + profile. */
 async function assertAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -28,13 +27,10 @@ async function assertAdmin() {
   return { user, profile };
 }
 
-/** Build a fake Request-like object from Next.js headers for logging */
 async function buildRequestContext() {
   const hdrs = await headers();
   return { headers: hdrs };
 }
-
-// ── Invite New User ────────────────────────────────────────────────────────────
 
 export interface InviteUserState {
   success: boolean;
@@ -63,7 +59,6 @@ export async function inviteUser(
 
     const admin = createAdminClient();
 
-    // Invite the user — Supabase sends them an email with a magic link
     const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
       email,
       {
@@ -73,7 +68,6 @@ export async function inviteUser(
     );
 
     if (inviteError) {
-      // Common case: user already exists
       if (inviteError.message.includes('already been registered')) {
         return { success: false, message: `A user with email "${email}" already exists.` };
       }
@@ -85,7 +79,6 @@ export async function inviteUser(
       return { success: false, message: 'User created but ID not returned. Check Supabase dashboard.' };
     }
 
-    // Update the auto-created profile row with department + employee ID
     const { error: profileError } = await admin
       .from('profiles')
       .upsert({
@@ -125,8 +118,6 @@ export async function inviteUser(
   }
 }
 
-// ── Update User Department ─────────────────────────────────────────────────────
-
 export interface UpdateDeptState {
   success: boolean;
   message: string;
@@ -161,7 +152,6 @@ export async function updateUserDepartment(
       return { success: false, message: error.message };
     }
 
-    // Fetch the updated user's name for the log
     const { data: updatedProfile } = await admin.from('profiles').select('full_name').eq('id', userId).single();
     const { user: adminUser, profile: adminProfile } = await assertAdmin();
     const reqCtx = await buildRequestContext();
@@ -183,8 +173,6 @@ export async function updateUserDepartment(
   }
 }
 
-// ── Delete / Disable User ─────────────────────────────────────────────────────
-
 export interface DeleteUserState {
   success: boolean;
   message: string;
@@ -202,11 +190,9 @@ export async function deleteUser(
 
     const admin = createAdminClient();
 
-    // Fetch the user's name/email before deleting (profile will be gone after)
     const { data: targetProfile } = await admin.from('profiles').select('full_name, department').eq('id', userId).single();
     const { data: targetAuthUser } = await admin.auth.admin.getUserById(userId);
 
-    // Delete from auth — cascade will remove profile row too
     const { error } = await admin.auth.admin.deleteUser(userId);
 
     if (error) {

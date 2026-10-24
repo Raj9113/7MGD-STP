@@ -6,7 +6,6 @@ import { navigate } from '@/lib/nav-pending';
 
 interface DateSelectProps {
   base: string;
-  /** dates that have a report, newest first */
   dates: string[];
   current?: string;
 }

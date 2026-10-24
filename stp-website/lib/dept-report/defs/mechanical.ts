@@ -1,12 +1,6 @@
 import type { DeptSchema, Field, Section } from '../schema';
 import { equipFields, equipStatus, hot, names, pmSection, sparesSection, vibration, workOrderSection } from './common';
 
-/**
- * Mechanical: equipment of the 12 MGD WWPS (Rajiv Nagar) and the 7 MGD WWTP (Sonia Vihar, IFAS + A2O with BNR, disc filters and UV),
- * taken from the plant's work performance certificate (Annexure A, E&M components). Row names are the starting lists;
- * every list can be edited on the form and is carried to the next day.
- */
-
 const rotating = (extra: Field[] = []): Field[] => [
   { key: 'name', label: 'Pump', type: 'text', carry: true },
   { key: 'status', label: 'Status', type: 'select', options: equipStatus, status: true },
@@ -29,7 +23,6 @@ export const MECHANICAL: DeptSchema = {
   blurb: '12 MGD WWPS and 7 MGD WWTP: pumps, screens, grit, IFAS reactors, blowers, disc filters, UV, sludge pumps, preventive maintenance',
   accent: { ring: 'border-orange-200', text: 'text-orange-700', bg: 'bg-orange-50', solid: 'bg-orange-600' },
   sections: [
-    // ── 12 MGD WWPS (Rajiv Nagar) ──
     {
       key: 'wwps_levels', title: 'WWPS - receiving chamber & wet well', icon: '🌊', kind: 'fields', view: 'stats',
       help: '12 MGD raw sewage pumping station: receiving chamber, coarse screen chamber and the 18 m dia. wet well (raw sump).',
@@ -61,7 +54,6 @@ export const MECHANICAL: DeptSchema = {
       ],
       seed: names(['Pump 1 - NRV/KGV-450', 'Pump 2 - NRV/KGV-450', 'Pump 3 - NRV/KGV-450', 'Pump 4 - NRV/KGV-450', 'Pump 5 - NRV/KGV-450', 'Common header - NRV/KGV-800']),
     },
-    // ── 7 MGD WWTP: preliminary treatment ──
     {
       key: 'prelim_waste', title: 'WWTP - screenings & grit removed today', icon: '🗑', kind: 'fields', view: 'stats',
       fields: [
@@ -93,7 +85,6 @@ export const MECHANICAL: DeptSchema = {
         'Disc filter gate 1 (1200 x 600)', 'Disc filter gate 2 (1200 x 600)', 'UV channel gate (900 x 900)',
       ]),
     },
-    // ── 7 MGD WWTP: biological reactors (A2O + IFAS) ──
     {
       key: 'bio_zones', title: 'Anaerobic & anoxic tanks (BNR)', icon: '🧫', kind: 'table', view: 'cards', addLabel: 'Add tank', titleKeys: ['zone'],
       help: 'Phosphorus release (anaerobic) and nitrogen removal (anoxic). Anoxic dissolved oxygen should stay near zero; above 0.5 mg/L is flagged.',
@@ -158,7 +149,6 @@ export const MECHANICAL: DeptSchema = {
       ],
       seed: names(['IFAS aeration tank 1', 'IFAS aeration tank 2']),
     },
-    // ── 7 MGD WWTP: clarification and tertiary ──
     {
       key: 'settlers', title: 'Secondary tube settlers', icon: '🏊', kind: 'table', view: 'cards', addLabel: 'Add settler', titleKeys: ['name'],
       help: 'Two tube settler tanks (tube deck media, MM Aqua) with KGV-450 sludge valves (Jupiter).',
@@ -204,7 +194,6 @@ export const MECHANICAL: DeptSchema = {
       ],
       seed: names(['UV bank 1', 'UV bank 2', 'UV bank 3']),
     },
-    // ── sludge ──
     {
       key: 'sludge_pumps', title: 'RAS & WAS pumps', icon: '🔁', kind: 'table', view: 'cards', addLabel: 'Add pump', titleKeys: ['name'],
       help: 'RAS: 3 pumps, 17.5 HP / 10.4 kW / 425 m³/hr (Aqua), MCC-2. WAS: 2 pumps, 60 HP / 45 kW / 50 m³/hr (Kirloskar), MCC-3. All VFD driven.',
@@ -224,7 +213,6 @@ export const MECHANICAL: DeptSchema = {
         { key: 'condition', label: 'Condition', type: 'select', options: ['Normal', 'Odour', 'Foaming', 'Overflow risk'] },
       ],
     },
-    // ── instruments ──
     {
       key: 'flows', title: 'Flow meters', icon: '💧', kind: 'table', view: 'cards', addLabel: 'Add flow meter', titleKeys: ['point'],
       help: 'Instantaneous flow and the totaliser reading at the time of the round. The 800 mm electromagnetic meter on the WWPS delivery line is by Siemens.',
@@ -238,7 +226,6 @@ export const MECHANICAL: DeptSchema = {
       ],
       seed: [{ point: 'WWPS delivery - 800 mm EM flow meter' }, { point: '7 MGD WWTP inlet' }, { point: 'Treated water outlet' }, { point: 'RAS flow' }, { point: 'WAS flow' }],
     },
-    // ── maintenance ──
     pmSection([
       { equipment: 'Raw sewage pumps (5) and motors', task: 'Grease bearings, check coupling, gland / seal', frequency: 'Monthly' },
       { equipment: 'Raw sewage pumps (5)', task: 'Check alignment, vibration and noise', frequency: 'Quarterly' },
@@ -262,4 +249,3 @@ export const MECHANICAL: DeptSchema = {
     ]),
   ],
 };
-

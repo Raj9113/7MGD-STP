@@ -1,8 +1,3 @@
-/**
- * Single source of truth for the website map shown on the login page.
- * Keep in sync with the routes under /app and the "Site map" table in the root README.md.
- */
-
 export type SiteMapAccess = 'public' | 'all' | 'department' | 'editors' | 'admin';
 
 export interface SiteMapEntry {

@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { PARAM, dayLabel, fmt, fmtFlow, lab, limitStatus, type DayRecord, type DayReport, type ParamKey } from './lab';
 
-// Column order follows the lab team's Excel sheet
 const COLS: { key: ParamKey; sides: ('in' | 'out')[] }[] = [
   { key: 'temp', sides: ['in', 'out'] },
   { key: 'ph', sides: ['in', 'out'] },

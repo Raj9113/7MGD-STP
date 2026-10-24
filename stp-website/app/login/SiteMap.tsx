@@ -11,7 +11,6 @@ const BADGE: Record<string, string> = {
   admin: 'bg-purple-100 text-purple-700',
 };
 
-/** Public site map: lets visitors see what the portal contains before signing in. */
 export default function SiteMap() {
   const [open, setOpen] = useState(false);
 

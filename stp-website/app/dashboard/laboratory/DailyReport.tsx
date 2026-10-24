@@ -4,7 +4,6 @@ import {
   type DayRecord, type DayReport, type LimitStatus, type ParamKey,
 } from './lab';
 
-// Row order follows the printed daily report
 const ROWS: (ParamKey | 'flow')[] = ['flow', 'temp', 'ph', 'bod', 'cod', 'tss', 'phos', 'alk', 'do', 'tn', 'nh4', 'oil', 'coliform'];
 
 const LABEL: Record<string, { name: string; unit: string }> = {
@@ -43,8 +42,6 @@ function show(key: ParamKey | 'flow', v: number | null | undefined) {
   return fmt(v, PARAM[key].decimals);
 }
 
-// ── Report card ──────────────────────────────────────────────────────────────
-
 export default function DailyReport({
   day,
   report,
@@ -53,7 +50,6 @@ export default function DailyReport({
 }: {
   day: DayRecord;
   report?: DayReport;
-  /** Set when this day was entered through the portal form */
   live?: { by: string | null; at: string };
   canEdit?: boolean;
 }) {
@@ -82,7 +78,6 @@ export default function DailyReport({
       </div>
 
       <div className="grid grid-cols-1 gap-5 p-4 sm:p-5 lg:grid-cols-5">
-        {/* Analysis table */}
         <div className="min-w-0 lg:col-span-3">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -137,7 +132,6 @@ export default function DailyReport({
           </p>
         </div>
 
-        {/* Photos + power */}
         <div className="min-w-0 space-y-5 lg:col-span-2">
           {report ? (
             <>
@@ -150,8 +144,6 @@ export default function DailyReport({
                     {report.photos.map((p) => (
                       <a key={p.src} href={p.src} target="_blank" rel="noopener noreferrer" className="group block">
                         <div className="relative aspect-4/3 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
-                          {/* Plain <img>: the optimiser fetches without the user's session cookie, which this signed-in-only route needs */}
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={p.src}
                             alt={p.kind === 'olms' ? `OLMS analyser display, ${dayLabel(day.date)}` : `Inlet and outlet samples, ${dayLabel(day.date)}`}

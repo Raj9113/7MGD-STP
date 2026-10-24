@@ -89,7 +89,6 @@ function SingleCamera({
         controls={status === 'playing'}
       />
 
-      {/* Overlay states */}
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-2">
           <svg className="animate-spin h-6 w-6 text-[#0062b8]" fill="none" viewBox="0 0 24 24">
@@ -108,7 +107,6 @@ function SingleCamera({
         </div>
       )}
 
-      {/* Title & Controls Overlay */}
       <div className="absolute top-0 left-0 w-full p-3 bg-gradient-to-b from-black/70 to-transparent flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
         <span className="text-white text-sm font-semibold shadow-sm">{title}</span>
         <div className="flex gap-2">
@@ -132,7 +130,6 @@ function SingleCamera({
   );
 }
 
-
 export default function CameraFeed() {
   const [baseUrl, setBaseUrl] = useState('');
   const [globalStatus, setGlobalStatus] = useState<Status>('loading');
@@ -150,8 +147,6 @@ export default function CameraFeed() {
         }
         const data = await res.json();
         
-        // Parse the URL: The user might set "https://domain.com", "https://domain.com/stream", or "https://domain.com/stream/stream.m3u8"
-        // We want to ensure the base always ends with "/stream" because the Express server serves files under /stream
         let base = data.url;
         if (base.endsWith('/stream.m3u8')) {
           base = base.replace(/\/stream\.m3u8$/, '');
@@ -164,7 +159,7 @@ export default function CameraFeed() {
         }
         
         setBaseUrl(base);
-        setGlobalStatus('playing'); // We have the base URL, now players will load individually
+        setGlobalStatus('playing');
       } catch {
         setGlobalStatus('offline');
       }
@@ -204,7 +199,6 @@ export default function CameraFeed() {
     );
   }
 
-  // Expanded View
   if (expandedCam !== null) {
     return (
       <div className="space-y-4 max-w-5xl">
@@ -231,7 +225,6 @@ export default function CameraFeed() {
     );
   }
 
-  // The exact camera IDs from the user's custom server script
   const cameraIds = ['12', '14', '26', '2'];
 
   return (

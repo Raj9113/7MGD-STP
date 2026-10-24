@@ -1,19 +1,5 @@
 'use client';
 
-/**
- * LiveCamera.tsx
- *
- * Reusable live camera viewer component for all department pages.
- *
- * Reads the HLS stream URL from the NEXT_PUBLIC_CAMERA_HLS_URL env variable.
- * If the variable is not set, shows a polished "Camera Unavailable" placeholder.
- *
- * Supports:
- *   - HLS (.m3u8) via hls.js (Chrome, Firefox, Edge)
- *   - Native HLS (Safari) via the <video> element directly
- *   - Fullscreen toggle
- */
-
 import { useEffect, useRef, useState } from 'react';
 
 const CAMERA_URL = process.env.NEXT_PUBLIC_CAMERA_HLS_URL ?? '';
@@ -24,7 +10,6 @@ export default function LiveCamera() {
   const [status, setStatus] = useState<'loading' | 'playing' | 'error' | 'no-url'>('loading');
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // ── Fullscreen handling ──────────────────────────────────────────────────
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onFsChange);
@@ -40,7 +25,6 @@ export default function LiveCamera() {
     }
   };
 
-  // ── HLS.js player ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!CAMERA_URL) {
       setStatus('no-url');
@@ -56,7 +40,6 @@ export default function LiveCamera() {
       const Hls = (await import('hls.js')).default;
 
       if (Hls.isSupported()) {
-        // Chrome / Firefox / Edge — use HLS.js
         hlsInstance = new Hls({
           lowLatencyMode: true,
           backBufferLength: 0,
@@ -76,7 +59,6 @@ export default function LiveCamera() {
           }
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari — native HLS support
         video.src = CAMERA_URL;
         video.addEventListener('loadedmetadata', () => {
           video.play().then(() => setStatus('playing')).catch(() => setStatus('error'));
@@ -94,7 +76,6 @@ export default function LiveCamera() {
     };
   }, []);
 
-  // ── No URL configured ────────────────────────────────────────────────────
   if (status === 'no-url') {
     return (
       <div>
@@ -113,7 +94,6 @@ export default function LiveCamera() {
     );
   }
 
-  // ── Player ────────────────────────────────────────────────────────────────
   return (
     <div>
       <SectionTitle />
@@ -122,7 +102,6 @@ export default function LiveCamera() {
         className="relative bg-black rounded-xl overflow-hidden border border-gray-800 shadow-lg group"
         style={{ aspectRatio: '16/9' }}
       >
-        {/* Video element */}
         <video
           ref={videoRef}
           className="w-full h-full object-cover"
@@ -131,7 +110,6 @@ export default function LiveCamera() {
           autoPlay
         />
 
-        {/* Loading overlay */}
         {status === 'loading' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -139,7 +117,6 @@ export default function LiveCamera() {
           </div>
         )}
 
-        {/* Error overlay */}
         {status === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80">
             <div className="text-4xl">📷</div>
@@ -156,7 +133,6 @@ export default function LiveCamera() {
           </div>
         )}
 
-        {/* Top-left: LIVE badge */}
         {status === 'playing' && (
           <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-red-600/90 backdrop-blur-sm text-white text-xs font-bold px-2.5 py-1 rounded-full shadow">
             <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -164,24 +140,20 @@ export default function LiveCamera() {
           </div>
         )}
 
-        {/* Top-right: Camera label */}
         <div className="absolute top-3 right-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <span className="bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full">
             Site Camera
           </span>
-          {/* Fullscreen button */}
           <button
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
             className="bg-black/60 backdrop-blur-sm text-white w-7 h-7 rounded-full flex items-center justify-center hover:bg-black/80 transition-all"
           >
             {isFullscreen ? (
-              // Compress icon
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
               </svg>
             ) : (
-              // Expand icon
               <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
               </svg>
@@ -189,7 +161,6 @@ export default function LiveCamera() {
           </button>
         </div>
 
-        {/* Bottom bar */}
         {status === 'playing' && (
           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <p className="text-white text-xs">
@@ -201,8 +172,6 @@ export default function LiveCamera() {
     </div>
   );
 }
-
-// ── Shared section title ────────────────────────────────────────────────────
 
 function SectionTitle() {
   return (

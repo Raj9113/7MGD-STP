@@ -4,7 +4,6 @@ import { sendEmail, buildUserApprovedEmail } from '@/lib/email';
 import { logActivity } from '@/lib/supabase/logger';
 import crypto from 'crypto';
 
-/** Generate a random strong temp password */
 function generateTempPassword(): string {
   const upper   = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
   const lower   = 'abcdefghjkmnpqrstuvwxyz';
@@ -14,12 +13,11 @@ function generateTempPassword(): string {
 
   const rand = (set: string) => set[crypto.randomInt(set.length)];
 
-  // Guarantee at least one of each type
   const required = [rand(upper), rand(lower), rand(digits), rand(special)];
   const rest = Array.from({ length: 8 }, () => rand(all));
 
   return [...required, ...rest]
-    .sort(() => crypto.randomInt(3) - 1) // shuffle
+    .sort(() => crypto.randomInt(3) - 1)
     .join('');
 }
 
@@ -50,7 +48,6 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient();
 
-  // Look up the request by token
   const { data: regRequest, error: fetchError } = await admin
     .from('registration_requests')
     .select('*')
@@ -70,14 +67,12 @@ export async function GET(request: Request) {
     });
   }
 
-  // Generate a temp password
   const tempPassword = generateTempPassword();
 
-  // Create the user in Supabase Auth
   const { data: newUser, error: createError } = await admin.auth.admin.createUser({
     email:            regRequest.email,
     password:         tempPassword,
-    email_confirm:    true,          // skip email confirmation — admin already verified
+    email_confirm:    true,
     user_metadata:    { full_name: regRequest.full_name },
   });
 
@@ -91,7 +86,6 @@ export async function GET(request: Request) {
 
   const userId = newUser.user.id;
 
-  // Upsert profile with department + must_change_password flag
   await admin.from('profiles').upsert({
     id:                  userId,
     full_name:           regRequest.full_name,
@@ -100,13 +94,11 @@ export async function GET(request: Request) {
     must_change_password: true,
   });
 
-  // Mark request as approved
   await admin.from('registration_requests').update({
     status:      'approved',
     reviewed_at: new Date().toISOString(),
   }).eq('id', regRequest.id);
 
-  // Log the event
   await logActivity({
     userId:     null,
     userName:   'System (Admin Email Link)',
@@ -117,7 +109,6 @@ export async function GET(request: Request) {
     request,
   });
 
-  // Email the user their temp password
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
   await sendEmail({
     to:      regRequest.email,

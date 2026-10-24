@@ -1,5 +1,3 @@
-// Small dependency-free SVG charts (server-rendered). Gaps in the data (null) break the line instead of faking a value.
-
 export interface Series {
   name: string;
   color: string;
@@ -12,9 +10,7 @@ interface ChartProps {
   unit?: string;
   labels: string[];
   series: Series[];
-  /** Permissible limit drawn as a dashed red line */
   limit?: number;
-  /** Show every n-th x label */
   labelEvery?: number;
   decimals?: number;
 }
@@ -98,7 +94,6 @@ export function LineChart({ title, subtitle, unit = '', labels, series, limit, l
             </g>
           )}
           {series.map((s) => {
-            // Split into continuous runs so missing days leave a gap
             const runs: { i: number; v: number }[][] = [];
             s.values.forEach((v, i) => {
               if (v === null) { runs.push([]); return; }

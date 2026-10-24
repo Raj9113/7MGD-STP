@@ -41,7 +41,6 @@ export default async function AdminPage() {
     );
   }
 
-  // Use Supabase client — RLS "Admins can view all profiles" policy handles this
   const { data: allProfiles } = await supabase
     .from('profiles')
     .select('id, full_name, department, employee_id, created_at')
@@ -55,10 +54,8 @@ export default async function AdminPage() {
     return acc;
   }, {});
 
-  // Fetch initial logs (first 25, no filter)
   const logsResult = await getLogs({ limit: 25, offset: 0 });
 
-  // Fetch pending registration + role requests
   const adminDb = createAdminClient();
   const { data: regRequests } = await adminDb
     .from('registration_requests')
@@ -79,7 +76,6 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6 max-w-5xl">
 
-      {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">🛡️ Admin Panel</h2>
         <p className="text-gray-500 text-sm mt-0.5">
@@ -87,7 +83,6 @@ export default async function AdminPage() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="bg-white rounded-xl border border-[#0062b8]/20 shadow-sm p-4">
           <p className="text-xs text-gray-500">Total Users</p>
@@ -101,10 +96,8 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Invite Form */}
       <InviteUserForm />
 
-      {/* Pending Registration Requests */}
       {pendingReg.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-amber-200 flex items-center gap-2">
@@ -147,7 +140,6 @@ export default async function AdminPage() {
         </div>
       )}
 
-      {/* Pending Role Requests */}
       {pendingRole.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-blue-200 flex items-center gap-2">
@@ -183,10 +175,8 @@ export default async function AdminPage() {
         </div>
       )}
 
-      {/* Users Table */}
       <UsersTable profiles={profiles} />
 
-      {/* Role Reference */}
       <div>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Role Reference
@@ -213,10 +203,8 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* Divider */}
       <hr className="border-gray-200" />
 
-      {/* Activity Log */}
       <ActivityLogPanel
         initialLogs={logsResult.logs}
         initialTotal={logsResult.total}

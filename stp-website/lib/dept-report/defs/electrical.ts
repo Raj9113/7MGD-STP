@@ -1,12 +1,6 @@
 import type { DeptSchema, Field } from '../schema';
 import { above, equipStatus, hot, names, pmSection, sparesSection, workOrderSection } from './common';
 
-/**
- * Electrical: the 11 kV BSES supply (RMU and metering rooms), HT switch yard (11 kV VCB), two 1250 kVA transformers,
- * LT PMCC, MCC-1 to MCC-5 with PLC / VFDs, SCADA, plus the energy meter that feeds the laboratory report. From the plant's
- * work performance certificate (Annexure A, E&M components). Lists can be edited on the form and carry to the next day.
- */
-
 const pfWarn = (v: number | string | undefined) => (typeof v === 'number' && v < 0.9 ? ('warn' as const) : undefined);
 
 const phase = (key: string, label: string, unit: string, max: number, step = '0.1'): Field => ({ key, label, type: 'number', unit, max, step });

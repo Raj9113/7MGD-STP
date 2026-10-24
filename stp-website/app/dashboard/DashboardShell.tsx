@@ -37,19 +37,12 @@ export default function DashboardShell({
 
       <div className="flex flex-1 overflow-hidden">
 
-        {/* ── Mobile Overlay Backdrop ─────────────────────────────────── */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
-
-        {/* ── Sidebar ─────────────────────────────────────────────────── */}
-        {/*
-          On desktop (md+): always visible, static, takes space in the flex row.
-          On mobile: fixed drawer that slides in from the left over the content.
-        */}
         <div
           className={`
             fixed inset-y-0 left-0 z-40 md:static md:z-auto
@@ -64,7 +57,6 @@ export default function DashboardShell({
           />
         </div>
 
-        {/* ── Main Content ─────────────────────────────────────────────── */}
         <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
           {children}
         </main>

@@ -3,25 +3,17 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { DayRecord, ParamKey } from '@/app/dashboard/laboratory/lab';
 
-/**
- * One month as a worksheet in the lab team's own layout. The template (templates/lab/month-sheet-template.xlsx) is the
- * Sep-26 sheet of their workbook: same title block with both logos, merged headers, column widths, cell styles, frozen
- * panes, landscape fit-to-page setup, Average row and the Chemist / Authorised sign line. Only the values change.
- */
-
-const TEMPLATE_DATA_ROWS = 30; // the template sheet is a 30-day month: data rows 5..34, Average row 35, footer rows 36..43
+const TEMPLATE_DATA_ROWS = 30;
 const FIRST_DATA_ROW = 5;
 
-// Column order of the sheet after Date / Pumping / Treated: inlet then outlet of each parameter
 const PARAM_COLUMNS: ParamKey[] = ['temp', 'ph', 'bod', 'cod', 'tss', 'phos', 'alk', 'do', 'tn', 'nh4', 'oil'];
 
-const colLetter = (i: number) => String.fromCharCode(65 + i); // A..Y (25 columns)
+const colLetter = (i: number) => String.fromCharCode(65 + i);
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 const MONTHS_TITLE = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** The sheet / file label the lab team uses: SEP-26 */
 export const sheetLabel = (monthKey: string) => `${MONTHS[Number(monthKey.slice(5)) - 1]}-${monthKey.slice(2, 4)}`;
 
 const excelSerial = (iso: string) => {
@@ -31,7 +23,6 @@ const excelSerial = (iso: string) => {
 
 type Cell = { kind: 'num'; v: number } | { kind: 'text'; v: string };
 
-/** The 25 values of one day's row, in column order A..Y. Blank = "-", and the DO inlet is "NIL", as in the sheets. */
 function rowCells(iso: string, d: DayRecord | undefined): Cell[] {
   const n = (v: number | null | undefined): Cell => (typeof v === 'number' && Number.isFinite(v) ? { kind: 'num', v } : { kind: 'text', v: '-' });
   const cells: Cell[] = [{ kind: 'num', v: excelSerial(iso) }, n(d?.flow?.pumping), n(d?.flow?.treated)];
@@ -47,15 +38,10 @@ const cellXml = (ref: string, style: string, c: Cell) =>
     ? `<c r="${ref}" s="${style}"><v>${c.v}</v></c>`
     : `<c r="${ref}" s="${style}" t="inlineStr"><is><t>${esc(c.v)}</t></is></c>`;
 
-/** Re-numbers a template row (and the row number inside every cell reference) */
 function moveRow(row: string, to: number): string {
   return row.replace(/^<row r="\d+"/, `<row r="${to}"`).replace(/<c r="([A-Z]+)\d+"/g, `<c r="$1${to}"`);
 }
 
-/**
- * `dates` (ISO, ascending, inside the month) limits the sheet to those days, e.g. one day or a custom range; by default
- * every calendar day of the month is listed.
- */
 export async function buildMonthWorkbook(monthKey: string, days: DayRecord[], dates?: string[]): Promise<Buffer> {
   const zip = await JSZip.loadAsync(await readFile(path.join(process.cwd(), 'templates', 'lab', 'month-sheet-template.xlsx')));
   const sheetFile = zip.file('xl/worksheets/sheet1.xml')!;
@@ -78,7 +64,6 @@ export async function buildMonthWorkbook(monthKey: string, days: DayRecord[], da
   const lastData = FIRST_DATA_ROW + dayCount - 1;
   const avgRow = lastData + 1;
 
-  // Rows 1-4: the title block as is, with the month title replaced
   const fmt = (iso: string) => `${iso.slice(8)}-${MONTHS_TITLE[Number(iso.slice(5, 7)) - 1]}-${iso.slice(0, 4)}`;
   const title = dayCount === monthDays ? `Lab. Report ${MONTHS_TITLE[month - 1]}-${year}` : dayCount === 1 ? `Lab. Report ${fmt(listed[0])}` : `Lab. Report ${fmt(listed[0])} to ${fmt(listed[dayCount - 1])}`;
   const out: string[] = [1, 2, 3, 4].map((n) => {
@@ -86,7 +71,6 @@ export async function buildMonthWorkbook(monthKey: string, days: DayRecord[], da
     return n === 2 ? r.replace(/<c r="A2"([^>]*?) t="s"><v>\d+<\/v><\/c>/, `<c r="A2"$1 t="inlineStr"><is><t>${esc(title)}</t></is></c>`) : r;
   });
 
-  // Data rows: every calendar day of the month, styled like the template's first data row
   const styles = [...rows.get(FIRST_DATA_ROW)!.matchAll(/<c r="[A-Z]+\d+" s="(\d+)"/g)].map((m) => m[1]);
   const rowOpen = rows.get(FIRST_DATA_ROW)!.match(/^<row [^>]*>/)![0];
   const columns: (number | null)[][] = Array.from({ length: 25 }, () => []);
@@ -97,7 +81,6 @@ export async function buildMonthWorkbook(monthKey: string, days: DayRecord[], da
     out.push(`${rowOpen.replace(/ r="\d+"/, ` r="${n}"`)}${cells.map((c, i) => cellXml(`${colLetter(i)}${n}`, styles[i], c)).join('')}</row>`);
   }
 
-  // Average row: live formulas (as in the workbook) plus the computed values, so viewers that don't recalculate still show them
   out.push(
     moveRow(rows.get(35)!, avgRow).replace(/<c r="([B-Y])\d+"( s="\d+")[^>]*?>[\s\S]*?<\/c>/g, (_m, col: string, style: string) => {
       const i = col.charCodeAt(0) - 65;
@@ -109,8 +92,7 @@ export async function buildMonthWorkbook(monthKey: string, days: DayRecord[], da
     }),
   );
 
-  // Footer rows (blank styled rows and the Chemist Sign / Authorised Sign line) follow the last data row
-  for (let n = 36; n <= 43; n++) if (rows.has(n)) out.push(moveRow(rows.get(n)!, n + shift)); // blank rows are absent from the sheet XML
+  for (let n = 36; n <= 43; n++) if (rows.has(n)) out.push(moveRow(rows.get(n)!, n + shift));
 
   head = head
     .replace(/<dimension ref="[^"]+"\/>/, `<dimension ref="A1:AD${43 + shift}"/>`)

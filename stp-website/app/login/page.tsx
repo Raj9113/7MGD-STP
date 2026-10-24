@@ -33,19 +33,16 @@ export default function LoginPage() {
       return;
     }
 
-    // On success, redirect to dashboard
     router.push('/dashboard');
     router.refresh();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 relative px-4 py-6 sm:px-6">
-      {/* Background Half-Blue Design */}
       <div className="absolute top-0 left-0 w-full h-2/5 bg-[#0062b8] z-0 shadow-lg" />
 
       <div className="relative z-10 w-full max-w-md bg-white rounded-2xl border-2 border-[#ffcc00] shadow-2xl overflow-hidden">
 
-        {/* Header Section */}
         <div className="bg-[#0062b8] p-8 flex flex-col items-center justify-center border-b-2 border-[#ffcc00]">
           <div className="border-2 border-[#ffcc00] rounded-xl px-8 py-2 mb-3 shadow-md">
             <h1 className="text-white text-6xl font-extrabold tracking-wide">AIP</h1>
@@ -55,7 +52,6 @@ export default function LoginPage() {
           </h2>
         </div>
 
-        {/* Login Form */}
         <div className="p-8">
           <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">
             Department Portal Login
@@ -72,7 +68,6 @@ export default function LoginPage() {
           )}
 
           <form className="space-y-5" onSubmit={handleLogin}>
-            {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Email Address
@@ -88,7 +83,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Password
@@ -109,7 +103,6 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -129,7 +122,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Request Access Link */}
           <div className="mt-6 pt-5 border-t border-gray-100 text-center">
             <p className="text-sm text-gray-500">
               Don&apos;t have an account?

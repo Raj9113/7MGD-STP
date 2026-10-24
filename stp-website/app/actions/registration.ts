@@ -37,7 +37,6 @@ export async function submitRegistrationRequest(
 
     const admin = createAdminClient();
 
-    // Check if email already has a pending request
     const { data: existing } = await admin
       .from('registration_requests')
       .select('id, status')
@@ -52,17 +51,14 @@ export async function submitRegistrationRequest(
       };
     }
 
-    // Check if user already exists in auth
     const { data: authUsers } = await admin.auth.admin.listUsers();
     const alreadyExists = authUsers?.users?.some((u) => u.email === email);
     if (alreadyExists) {
       return { success: false, message: 'An account with this email already exists. Please log in directly.' };
     }
 
-    // Generate a secure token for the admin approval link
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Insert the request
     const { error: insertError } = await admin.from('registration_requests').insert({
       full_name:   fullName,
       email,
@@ -78,7 +74,6 @@ export async function submitRegistrationRequest(
       return { success: false, message: 'Failed to submit request. Please try again.' };
     }
 
-    // Send email to admin
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
     const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;
 

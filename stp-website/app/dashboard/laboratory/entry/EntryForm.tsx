@@ -21,7 +21,6 @@ interface EntryFormProps {
   photos: Partial<Record<PhotoKind, string>>;
   meta: EntryMeta;
   recent: RecentDay[];
-  /** the logged-in user (recorded on the report automatically) */
   userName: string;
   isAdmin: boolean;
 }
@@ -43,7 +42,6 @@ function isBad(l: { min?: number; max?: number } | undefined, raw: string | unde
   return (l.max !== undefined && v > l.max) || (l.min !== undefined && v < l.min);
 }
 
-/** Shrinks a phone photo (often 4–8 MB) to about 1600 px / a few hundred KB before upload. */
 async function compress(file: File): Promise<File> {
   try {
     const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
@@ -55,7 +53,6 @@ async function compress(file: File): Promise<File> {
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
     if (blob && blob.size < file.size) return new File([blob], 'photo.jpg', { type: 'image/jpeg' });
   } catch {
-    // unreadable format (e.g. HEIC in some browsers): send the original and let the server decide
   }
   return file;
 }
@@ -118,7 +115,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <LoadingOverlay show={working} text="Saving laboratory report and photos…" />
-      {/* Result */}
       {state.message && (
         <div
           role="status"
@@ -136,7 +132,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
         </div>
       )}
 
-      {/* Date */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <div>
@@ -185,7 +180,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
         </div>
       </section>
 
-      {/* Flow */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-gray-500">Flow (MGD)</h3>
         <div className="grid grid-cols-2 gap-3 sm:max-w-md">
@@ -200,7 +194,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
         </div>
       </section>
 
-      {/* Analysis */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-semibold uppercase tracking-widest text-gray-500">Laboratory analysis</h3>
@@ -255,7 +248,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
         )}
       </section>
 
-      {/* Power */}
       <section className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
         <h3 className="text-sm font-semibold uppercase tracking-widest text-yellow-800">⚡ Power consumption</h3>
         <p className="mt-1 text-sm text-yellow-900">
@@ -266,7 +258,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
         </Link>
       </section>
 
-      {/* Photos */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <h3 className="mb-3 text-sm font-semibold uppercase tracking-widest text-gray-500">Photographs</h3>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -312,7 +303,6 @@ export default function EntryForm({ date, today, defaults, limits, photos, meta,
   );
 }
 
-/** Lets a row's cells take part in the parent grid without an extra wrapper box */
 function FieldRow({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

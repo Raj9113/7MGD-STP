@@ -1,18 +1,7 @@
-/**
- * Role-based access control utilities for the 7MGD STP portal.
- *
- * Roles: 'Mechanical' | 'Electrical' | 'Housekeeping' | 'Laboratory' | 'Admin' | 'Viewer'
- *
- * Viewer  → read-only access to ALL department pages
- * Admin   → full access to ALL department pages + admin panel
- * Others  → full access to THEIR OWN department page only
- */
-
 export type STPRole = 'Mechanical' | 'Electrical' | 'Housekeeping' | 'Laboratory' | 'Admin' | 'Viewer';
 
-/** Can this role view the live camera feed? Currently all logged-in roles can. */
 export function canViewCamera(_role: string): boolean {
-  return true; // Change to: return role === 'Admin'; to restrict access
+  return true;
 }
 
 export type DeptSlug = 'mechanical' | 'electrical' | 'housekeeping' | 'laboratory';
@@ -24,38 +13,31 @@ const DEPT_SLUG_TO_ROLE: Record<DeptSlug, STPRole> = {
   laboratory: 'Laboratory',
 };
 
-/** Can this role view a specific department page? */
 export function canViewDept(role: string, dept: DeptSlug): boolean {
   if (role === 'Admin' || role === 'Viewer') return true;
   return role === DEPT_SLUG_TO_ROLE[dept];
 }
 
-/** Can this role enter / correct Laboratory reports? (the chemist and assistant have the Laboratory role) */
 export function canEditLab(role: string): boolean {
   return role === 'Admin' || role === 'Laboratory';
 }
 
-/** Can this role enter / correct the daily report of a department? Admin and that department's own staff (never Viewer). */
 export function canEditDept(role: string, dept: DeptSlug): boolean {
   return role === 'Admin' || role === DEPT_SLUG_TO_ROLE[dept];
 }
 
-/** Can this role access the Admin panel? */
 export function canViewAdmin(role: string): boolean {
   return role === 'Admin';
 }
 
-/** Is this role in read-only mode? (Viewer cannot edit/comment/trigger) */
 export function isReadOnly(role: string): boolean {
   return role === 'Viewer';
 }
 
-/** Returns true if the role can perform write/action operations */
 export function canEdit(role: string): boolean {
   return role !== 'Viewer';
 }
 
-/** Nav links visible to each role */
 export function getAllowedNavLinks(role: string): NavLink[] {
   const links: NavLink[] = [
     { label: 'Overview', href: '/dashboard', icon: '🏭' },

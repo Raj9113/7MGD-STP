@@ -4,8 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import * as XLSX from 'xlsx';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 export interface ActivityLog {
   id: string;
   created_at: string;
@@ -20,8 +18,6 @@ export interface ActivityLog {
   city: string | null;
   country: string | null;
 }
-
-// ── Assert Admin ──────────────────────────────────────────────────────────────
 
 async function assertAdmin() {
   const supabase = await createClient();
@@ -38,8 +34,6 @@ async function assertAdmin() {
     throw new Error('Forbidden — Admin access required.');
   }
 }
-
-// ── Get Logs ─────────────────────────────────────────────────────────────────
 
 export interface GetLogsOptions {
   limit?: number;
@@ -87,7 +81,6 @@ export async function getLogs(options: GetLogsOptions = {}): Promise<GetLogsResu
       query = query.gte('created_at', dateFrom);
     }
     if (dateTo) {
-      // Add 1 day to include the full end date
       const endDate = new Date(dateTo);
       endDate.setDate(endDate.getDate() + 1);
       query = query.lt('created_at', endDate.toISOString());
@@ -110,8 +103,6 @@ export async function getLogs(options: GetLogsOptions = {}): Promise<GetLogsResu
   }
 }
 
-// ── Export to Excel ───────────────────────────────────────────────────────────
-
 export async function exportLogsToExcel(): Promise<{
   success: boolean;
   base64?: string;
@@ -133,7 +124,6 @@ export async function exportLogsToExcel(): Promise<{
 
     const logs = (data as ActivityLog[]) ?? [];
 
-    // Format rows for Excel
     const rows = logs.map((log) => ({
       'Date & Time': log.created_at
         ? new Date(log.created_at).toLocaleString('en-IN', {
@@ -159,25 +149,23 @@ export async function exportLogsToExcel(): Promise<{
 
     const worksheet = XLSX.utils.json_to_sheet(rows);
 
-    // Auto-size columns
     const colWidths = [
-      { wch: 22 }, // Date & Time
-      { wch: 20 }, // User Name
-      { wch: 30 }, // User Email
-      { wch: 14 }, // Department
-      { wch: 14 }, // Action
-      { wch: 50 }, // Details
-      { wch: 16 }, // IP Address
-      { wch: 16 }, // City
-      { wch: 16 }, // Country
-      { wch: 60 }, // Device / Browser
+      { wch: 22 },
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 50 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 60 },
     ];
     worksheet['!cols'] = colWidths;
 
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Activity Logs');
 
-    // Return as base64 so we can stream it from the server action to the client
     const base64 = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' }) as string;
 
     const now = new Date().toLocaleString('en-IN', {

@@ -1,11 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage, type RGB } from 'pdf-lib';
 
-/**
- * A tiny layout toolkit on top of pdf-lib: flowing text, wrapped tables that continue across pages, KPI tiles, section
- * banners, images, and a header (logos + title) / footer (page numbers) on every page. Standard PDF fonts only, so
- * text is passed through pdfSafe() which swaps the few characters those fonts cannot draw.
- */
-
 export const hex = (h: string): RGB => rgb(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255);
 
 export const COLORS = {
@@ -15,8 +9,6 @@ export const COLORS = {
   blue: hex('0062B8'), amber: hex('B9770E'), amberBg: hex('FEF5E7'), orange: hex('D35400'), green: hex('1E8449'), purple: hex('6C3483'),
   grayBg: hex('F2F3F4'),
 };
-
-// ── text that standard fonts can draw ────────────────────────────────────────
 
 const SWAP: Record<string, string> = {
   '≤': '<=', '≥': '>=', '→': '->', '↗': 'up', '↘': 'down', '↑': 'up', '↓': 'down', '✓': 'OK', '✔': 'OK', '▲': '^', '▼': 'v',
@@ -37,8 +29,6 @@ export function pdfSafe(s: string): string {
   return out;
 }
 
-// ── layout ───────────────────────────────────────────────────────────────────
-
 export const PAGE = { w: 595.28, h: 841.89, margin: 40, top: 92, bottom: 50 };
 export const CONTENT_W = PAGE.w - PAGE.margin * 2;
 
@@ -52,9 +42,7 @@ export class Kit {
   regular!: PDFFont;
   bold!: PDFFont;
   page!: PDFPage;
-  /** distance from the top of the page */
   y = 0;
-  /** colour of table header rows (set per department section) */
   accent: RGB = COLORS.teal;
   private logoL?: PDFImage;
   private logoR?: PDFImage;
@@ -69,7 +57,6 @@ export class Kit {
     return k;
   }
 
-  // ── pages ──
   addPage() {
     this.page = this.pdf.addPage([PAGE.w, PAGE.h]);
     this.y = PAGE.top;
@@ -81,7 +68,6 @@ export class Kit {
   space(h: number) { this.y += h; }
   private py(fromTop: number) { return PAGE.h - fromTop; }
 
-  // ── text ──
   width(s: string, size: number, bold = false) {
     return (bold ? this.bold : this.regular).widthOfTextAtSize(pdfSafe(s), size);
   }
@@ -93,7 +79,6 @@ export class Kit {
     for (const para of pdfSafe(s).split('\n')) {
       let line = '';
       for (let word of para.split(' ')) {
-        // break a word that is wider than the whole line
         while (!fits(word) && word.length > 1) {
           let cut = word.length - 1;
           while (cut > 1 && !fits(word.slice(0, cut))) cut--;
@@ -110,7 +95,6 @@ export class Kit {
     return lines;
   }
 
-  /** A paragraph at the current position (wraps, flows onto the next page). */
   text(s: string, o: { size?: number; bold?: boolean; color?: RGB; x?: number; maxW?: number; gap?: number; align?: 'left' | 'center' | 'right' } = {}) {
     const size = o.size ?? 9;
     const x = o.x ?? PAGE.margin;
@@ -126,8 +110,6 @@ export class Kit {
     this.y += o.gap ?? 0;
   }
 
-  // ── blocks ──
-  /** Full-width coloured title bar for a section; `tag` is a small pill on the right (e.g. SAMPLE DATA). */
   banner(title: string, color: RGB, tag?: { text: string; fg: RGB; bg: RGB }) {
     this.ensure(30);
     const h = 24;
@@ -142,11 +124,10 @@ export class Kit {
   }
 
   subheading(s: string, color: RGB = COLORS.teal) {
-    this.ensure(78); // heading + the table header and a first row
+    this.ensure(78);
     this.text(s, { size: 10.5, bold: true, color, gap: 3 });
   }
 
-  /** Tinted note box with wrapped text. */
   note(s: string, o: { fg?: RGB; bg?: RGB; size?: number } = {}) {
     const size = o.size ?? 8.5;
     const lines = this.wrap(s, size, CONTENT_W - 20);
@@ -161,7 +142,6 @@ export class Kit {
     this.y += h + 8;
   }
 
-  /** Row(s) of equal tiles: label, big value, small sub line; border/value colour shows status. */
   tiles(items: { label: string; value: string; sub?: string; color?: RGB; bg?: RGB }[], perRow = 4) {
     const gap = 8;
     const w = (CONTENT_W - gap * (perRow - 1)) / perRow;
@@ -180,7 +160,6 @@ export class Kit {
     }
   }
 
-  /** Table with a coloured header row that repeats on every page it spans. */
   table(
     cols: Column[],
     rows: string[][],
@@ -244,11 +223,6 @@ export class Kit {
     this.y += 8;
   }
 
-  /**
-   * The photo frame of the lab's Word report: one dashed teal frame across the page, the OLMS photo in a box on the left and
-   * the sample photo in a square box on the right; each photo is fitted inside its box and centred (box sizes are the Word
-   * template's, scaled to the page width).
-   */
   photoFrame(left?: PDFImage, right?: PDFImage) {
     const k = CONTENT_W / 522.4;
     const fh = 227.05 * k;
@@ -269,7 +243,6 @@ export class Kit {
     this.y = top + fh + 10;
   }
 
-  /** Draws an image scaled to fit the box (left aligned); returns the drawn height. */
   image(img: PDFImage, x: number, maxW: number, maxH: number): { w: number; h: number } {
     const s = Math.min(maxW / img.width, maxH / img.height);
     const w = img.width * s;
@@ -278,7 +251,6 @@ export class Kit {
     return { w, h };
   }
 
-  // ── header / footer on every page, then serialise ──
   async finish(opts: { title: string; subtitle: string; generated: string }): Promise<Uint8Array> {
     const pages = this.pdf.getPages();
     pages.forEach((p, i) => {

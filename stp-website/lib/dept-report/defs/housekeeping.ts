@@ -1,12 +1,6 @@
 import type { DeptSchema, Field, Row, Section } from '../schema';
 import { names, sparesSection } from './common';
 
-/**
- * Housekeeping: shift cleaning rounds over the real areas of the plant (12 MGD WWPS and 7 MGD WWTP buildings, tanks and
- * rooms from the work performance certificate), the laboratory chemicals stock, waste and sludge disposal, sanitation, greenery, pest control, safety
- * checks, consumables and PPE. Lists can be edited on the form and carry to the next day.
- */
-
 const taskFields: Field[] = [
   { key: 'area', label: 'Area', type: 'text', carry: true },
   { key: 'task', label: 'Task', type: 'text', carry: true },
@@ -32,8 +26,6 @@ export const HOUSEKEEPING: DeptSchema = {
   blurb: 'Shift cleaning rounds, waste and sludge disposal, sanitation, greenery, pest control, safety checks, consumables and PPE',
   accent: { ring: 'border-green-200', text: 'text-green-700', bg: 'bg-green-50', solid: 'bg-green-600' },
   sections: [
-    // Shifts: Morning 07-15, General 09-17 (office / general staff), Evening 15-23, Night 23-07 (India time).
-    // Each has a supervisor (a `loginName` field: staff cannot type it, see applyLoginNames) and its tasks.
     supervisor('morning', 'Morning shift (07:00-15:00)', '🌅', 7, 15),
     tasks('morning_tasks', 'Morning shift - process area cleaning', rows([
       ['WWPS - receiving chamber & coarse screen chamber', 'Clear debris and screenings, wash down'],

@@ -13,7 +13,6 @@ const dateInput =
 const longDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 
-/** Admin-only: opens a small panel to pick a date or a custom range and a format (PDF, Word or Excel) and downloads the all-department daily report. */
 export default function DailyReportButton({ today }: { today: string }) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('day');

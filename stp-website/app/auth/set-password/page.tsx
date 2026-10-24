@@ -19,17 +19,14 @@ export default function SetPasswordPage() {
   const [isTempPassword, setIsTempPassword] = useState(false);
   const [checking, setChecking] = useState(true);
 
-  // Verify the user has an active session (arrived via invite link or must_change_password)
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
-        // No session: the link expired / was already used (mail scanners often open it first)
         router.replace('/login?error=invite_expired');
         return;
       }
       setUserEmail(user.email ?? null);
       setUserId(user.id);
-      // Check if this is a forced password-change (temp password flow)
       const { data: profile } = await supabase
         .from('profiles')
         .select('must_change_password')
@@ -63,14 +60,12 @@ export default function SetPasswordPage() {
       return;
     }
 
-    // If this was a temp-password forced change, clear the flag
     if (isTempPassword && userId) {
       await supabase.from('profiles').update({ must_change_password: false }).eq('id', userId);
     }
 
     setSuccess(true);
 
-    // Wait 2 seconds then redirect to dashboard
     setTimeout(() => {
       router.push('/dashboard');
       router.refresh();
@@ -93,12 +88,10 @@ export default function SetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 relative">
-      {/* Background Half-Blue Design */}
       <div className="absolute top-0 left-0 w-full h-2/5 bg-[#0062b8] z-0 shadow-lg" />
 
       <div className="relative z-10 w-full max-w-md bg-white rounded-2xl border-2 border-[#ffcc00] shadow-2xl overflow-hidden">
 
-        {/* Header */}
         <div className="bg-[#0062b8] p-8 flex flex-col items-center justify-center border-b-2 border-[#ffcc00]">
           <div className="border-2 border-[#ffcc00] rounded-xl px-8 py-2 mb-3 shadow-md">
             <h1 className="text-white text-6xl font-extrabold tracking-wide">AIP</h1>
@@ -108,7 +101,6 @@ export default function SetPasswordPage() {
           </h2>
         </div>
 
-        {/* Form */}
         <div className="p-8">
           <h3 className="text-xl font-bold text-gray-800 mb-1 text-center">
             Welcome! Set Your Password
@@ -138,7 +130,6 @@ export default function SetPasswordPage() {
               )}
 
               <form className="space-y-5" onSubmit={handleSubmit}>
-                {/* New Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     New Password
@@ -156,7 +147,6 @@ export default function SetPasswordPage() {
                   />
                 </div>
 
-                {/* Confirm Password */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Confirm Password
@@ -172,7 +162,6 @@ export default function SetPasswordPage() {
                   />
                 </div>
 
-                {/* Password strength hint */}
                 <ul className="text-xs text-gray-400 space-y-0.5 list-disc list-inside">
                   <li className={password.length >= 8 ? 'text-green-600' : ''}>At least 8 characters</li>
                   <li className={/[A-Z]/.test(password) ? 'text-green-600' : ''}>One uppercase letter (recommended)</li>

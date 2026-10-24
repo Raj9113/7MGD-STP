@@ -2,7 +2,6 @@ import { createClient } from '@/lib/supabase/server';
 import { canViewDept } from '@/lib/access';
 import { NextResponse } from 'next/server';
 
-/** Only signed-in users who may view the Laboratory page can download its reports (Laboratory, Admin, Viewer). */
 export async function requireLabViewer(): Promise<NextResponse | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

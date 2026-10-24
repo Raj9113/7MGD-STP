@@ -2,16 +2,11 @@ import JSZip from 'jszip';
 import { imageInfo } from '@/lib/lab-export/image';
 import { TONE_FILL, TONE_HEX, cellBold, cellText, cellTone, type Doc } from './model';
 
-/**
- * Writes a Doc as a Word file (.docx) from scratch: A4 portrait, logos + title in the page header, page numbers in the
- * footer, coloured section bars, tables with a repeating header row, and photographs. Plain WordprocessingML, no template.
- */
-
 const PAGE_W = 11906;
 const PAGE_H = 16838;
 const MARGIN_X = 1134;
-const CONTENT_W = PAGE_W - MARGIN_X * 2; // 9638 twips
-const EMU = 9525; // per pixel at 96 dpi
+const CONTENT_W = PAGE_W - MARGIN_X * 2;
+const EMU = 9525;
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
 
@@ -68,7 +63,6 @@ export async function renderDocx(doc: Doc, logos: DocxLogos = {}, photoWidth = 9
     return m;
   }
 
-  /** An inline picture scaled to fit maxW x maxH (in 1/100 inch), keeping its proportions */
   const picture = (m: Media, maxWpx: number, maxHpx: number) => {
     const s = Math.min(maxWpx / m.w, maxHpx / m.h, 1e6);
     const cx = Math.round(m.w * s * EMU);
@@ -84,7 +78,6 @@ export async function renderDocx(doc: Doc, logos: DocxLogos = {}, photoWidth = 9
     );
   };
 
-  // ── body ──
   const body: string[] = [];
   let first = true;
   for (const chapter of doc.chapters) {
@@ -131,7 +124,6 @@ export async function renderDocx(doc: Doc, logos: DocxLogos = {}, photoWidth = 9
           const items = (await Promise.all(b.items.slice(0, 2).map(async (it) => ({ it, m: await addMedia(it.bytes, photoWidth) })))).filter((x) => x.m);
           if (!items.length) break;
           const half = Math.floor(CONTENT_W / 2);
-          // like the lab's Word page: OLMS photo left, sample photo right, inside one dashed frame
           const blank = () => cell(half, para('', { after: 0 }));
           const slotted = (slot: 'left' | 'right') => items.find((x) => x.it.slot === slot) ?? (items.every((x) => !x.it.slot) ? items[slot === 'left' ? 0 : 1] : undefined);
           const cells = (['left', 'right'] as const).map((slot) => {
@@ -151,7 +143,6 @@ export async function renderDocx(doc: Doc, logos: DocxLogos = {}, photoWidth = 9
     first = false;
   }
 
-  // ── header (logos + title) and footer (generated + page numbers) ──
   const logoL = logos.left ? await addMedia(logos.left) : null;
   const logoR = logos.right ? await addMedia(logos.right) : null;
   const headerMedia = [logoL, logoR].filter(Boolean) as Media[];

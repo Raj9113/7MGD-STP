@@ -1,7 +1,3 @@
-/**
- * Supabase Admin client — uses the service role key to bypass RLS.
- * ONLY use this in Server Actions / API routes. NEVER import in client components.
- */
 import { createClient } from '@supabase/supabase-js';
 
 export function createAdminClient() {

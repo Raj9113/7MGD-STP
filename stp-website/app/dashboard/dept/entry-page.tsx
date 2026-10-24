@@ -9,7 +9,6 @@ import DeptEntryForm, { type EntryMeta, type RecentDay } from './DeptEntryForm';
 
 export type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
-/** The daily entry form of one department (shared by /dashboard/{mechanical,electrical,housekeeping}/entry). */
 export default async function DeptEntryPage({ dept, searchParams }: { dept: DeptSlug; searchParams: SearchParams }) {
   const schema = SCHEMAS[dept];
   const supabase = await createClient();

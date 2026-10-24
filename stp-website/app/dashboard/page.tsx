@@ -12,7 +12,6 @@ import { todayIST } from './laboratory/entry-fields';
 
 const shortDate = (iso: string) => new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', timeZone: 'UTC' });
 
-/** "Updated today" / "Last report 06 Oct" / "No report yet", with a colour that fades as the report ages */
 function freshness(date: string | undefined, today: string): { status: string; statusColor: string } {
   if (!date) return { status: 'No report yet', statusColor: 'bg-gray-100 text-gray-600' };
   if (date === today) return { status: 'Updated today', statusColor: 'bg-green-100 text-green-700' };
@@ -40,7 +39,6 @@ export default async function DashboardOverviewPage() {
 
   const role = profile?.department ?? 'Unknown';
 
-  // Everything below comes from the real reports: the lab files / entry form and the department daily reports
   const today = todayIST();
   const [{ data: lab }, latest] = await Promise.all([loadLab(), loadLatestEach(today)]);
   const lastLab = lab.months.flatMap((m) => m.days).filter((d) => d.date <= today).at(-1);
@@ -80,7 +78,6 @@ export default async function DashboardOverviewPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      {/* Welcome */}
       <div className="bg-white rounded-xl border-l-4 border border-gray-200 shadow-sm p-6 flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">
@@ -97,10 +94,8 @@ export default async function DashboardOverviewPage() {
         </p>
       </div>
 
-      {/* Daily plant report PDF (Admin only) */}
       {canViewAdmin(role) && <DailyReportButton today={todayIST()} />}
 
-      {/* Plant Stats */}
       <div>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Plant Overview
@@ -120,7 +115,6 @@ export default async function DashboardOverviewPage() {
         </div>
       </div>
 
-      {/* ── Live NVR Camera Feed ─────────────────────────────────────────── */}
       <div>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Live Camera
@@ -128,7 +122,6 @@ export default async function DashboardOverviewPage() {
         <CameraFeed />
       </div>
 
-      {/* Department Quick-Access */}
       <div>
         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">
           Departments

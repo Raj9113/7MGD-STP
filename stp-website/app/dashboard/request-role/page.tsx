@@ -41,7 +41,6 @@ export default function RequestRolePage() {
   return (
     <div className="space-y-6 max-w-lg">
 
-      {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-800">⬆️ Request Role Promotion</h2>
         <p className="text-gray-500 text-sm mt-0.5">
@@ -49,7 +48,6 @@ export default function RequestRolePage() {
         </p>
       </div>
 
-      {/* Form Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
 
         {state.message && !state.success && (
@@ -61,7 +59,6 @@ export default function RequestRolePage() {
         <form action={action} className="space-y-5">
           <LoadingOverlay show={pending} text="Sending your request…" />
 
-          {/* Requested Role */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Requested Department / Role *
@@ -91,7 +88,6 @@ export default function RequestRolePage() {
             </div>
           </div>
 
-          {/* Reason */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
               Reason for Request <span className="text-gray-400 font-normal">(optional but recommended)</span>
@@ -106,7 +102,6 @@ export default function RequestRolePage() {
             />
           </div>
 
-          {/* Submit */}
           <button
             id="role-req-submit-btn"
             type="submit"
@@ -126,7 +121,6 @@ export default function RequestRolePage() {
         </form>
       </div>
 
-      {/* Info Box */}
       <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
         <p className="text-xs text-blue-700 leading-relaxed">
           <strong>ℹ️ How this works:</strong> Your request is sent to the admin by email. If approved, your role will update automatically and you will receive a confirmation email. You only need to log out and back in for the new permissions to take effect.

@@ -6,7 +6,6 @@ export const ddmmyyyy = (iso: string) => iso.split('-').reverse().join('-');
 
 export const MAX_DAYS = 31;
 
-/** Checks ?from=&to= and returns them, or the error to send back */
 export function readRange(q: URLSearchParams): { from: string; to: string } | { error: string } {
   const from = q.get('from');
   const to = q.get('to') ?? from;
@@ -16,7 +15,6 @@ export function readRange(q: URLSearchParams): { from: string; to: string } | { 
   return { from, to };
 }
 
-/** File name (no extension): "Lab Report 15-09-2026", "SEP-26 Lab Report" for a whole month, or "Lab Report 10-09-2026 to 15-09-2026" */
 export function labFileName(from: string, to: string): string {
   const lastOfMonth = `${to.slice(0, 7)}-${String(new Date(Date.UTC(Number(to.slice(0, 4)), Number(to.slice(5, 7)), 0)).getUTCDate()).padStart(2, '0')}`;
   return from === to ? `Lab Report ${ddmmyyyy(from)}`

@@ -1,4 +1,3 @@
-// Shown instantly while a dashboard page is being prepared on the server (Next.js loading UI)
 export default function DashboardLoading() {
   return (
     <div className="max-w-6xl space-y-5" aria-busy="true" aria-live="polite">

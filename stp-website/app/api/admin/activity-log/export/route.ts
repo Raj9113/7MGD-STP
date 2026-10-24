@@ -9,7 +9,7 @@ import type { Doc } from '@/lib/report-doc/model';
 import { renderPdf } from '@/lib/report-doc/pdf';
 import { renderDocx } from '@/lib/report-doc/docx';
 
-const MAX_ROWS = 1000; // newest first; the Excel file always holds everything
+const MAX_ROWS = 1000;
 const MAX_BYTES = 4_300_000;
 
 const FORMATS = {
@@ -21,10 +21,6 @@ type Format = keyof typeof FORMATS;
 
 const when = (iso: string) => new Date(iso).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-/**
- * GET /api/admin/activity-log/export?format=xlsx|pdf|docx
- * Admin only. Excel holds the whole log; PDF and Word hold the newest 1000 events.
- */
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

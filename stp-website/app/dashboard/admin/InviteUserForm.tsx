@@ -23,7 +23,6 @@ export default function InviteUserForm() {
       <form action={formAction} className="p-6">
         <LoadingOverlay show={isPending} text="Sending the invitation…" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Full Name */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Full Name <span className="text-red-500">*</span>
@@ -38,7 +37,6 @@ export default function InviteUserForm() {
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Email Address <span className="text-red-500">*</span>
@@ -53,7 +51,6 @@ export default function InviteUserForm() {
             />
           </div>
 
-          {/* Department */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Department / Role <span className="text-red-500">*</span>
@@ -71,7 +68,6 @@ export default function InviteUserForm() {
             </select>
           </div>
 
-          {/* Employee ID */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               Employee ID <span className="text-gray-400 text-xs font-normal">(optional)</span>
@@ -86,7 +82,6 @@ export default function InviteUserForm() {
           </div>
         </div>
 
-        {/* Feedback message */}
         {state.message && (
           <div
             className={`mt-4 p-3 rounded-lg text-sm font-medium ${state.success

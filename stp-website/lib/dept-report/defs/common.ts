@@ -1,23 +1,14 @@
 import type { Cell, Field, Level, Row, Section } from '../schema';
 
-/**
- * Building blocks shared by the Mechanical, Electrical and Housekeeping reports. Types only are imported from ../schema
- * (no runtime import), so schema.ts can import the department definitions without a cycle.
- */
-
 export const equipStatus = ['Running', 'Standby', 'Under maintenance', 'Fault', 'Stopped'];
 export const percent = { min: 0, max: 100, step: '1' } as const;
 
-/** A number above `limit` is flagged (red by default) */
 export const above = (limit: number, level: 'bad' | 'warn' = 'bad') => (v: Cell | undefined): Level => (typeof v === 'number' && v > limit ? level : undefined);
 
-/** Bearing / winding temperature: red above the limit */
 export const hot = (limit: number) => above(limit);
 
-/** Vibration velocity (mm/s RMS), ISO 10816 style: amber above 4.5, red above 7.1 */
 export const vibration = (v: Cell | undefined): Level => (typeof v === 'number' ? (v > 7.1 ? 'bad' : v > 4.5 ? 'warn' : undefined) : undefined);
 
-/** A task / equipment row marked on the day: name carried, status picked */
 export const equipFields: Field[] = [
   { key: 'name', label: 'Equipment', type: 'text', carry: true },
   { key: 'status', label: 'Status', type: 'select', options: equipStatus, status: true },
@@ -29,7 +20,6 @@ export const equipFields: Field[] = [
 
 export const names = (list: string[]): Row[] => list.map((name) => ({ name }));
 
-/** Preventive maintenance list: what is done, how often, last done and next due */
 export const pmSection = (seed: Row[]): Section => ({
   key: 'pm', title: 'Preventive maintenance schedule', icon: '🗓', kind: 'table', view: 'table', addLabel: 'Add task', titleKeys: ['equipment', 'task'],
   help: 'The list stays from day to day. Mark Done on the day a task is carried out and update Last done / Next due.',
@@ -45,7 +35,6 @@ export const pmSection = (seed: Row[]): Section => ({
   seed,
 });
 
-/** Breakdowns, corrective jobs and other work orders; open ones carry over to the next day */
 export const workOrderSection = (): Section => ({
   key: 'workorders', title: 'Breakdown & work orders', icon: '🔧', kind: 'table', view: 'table', addLabel: 'Add work order', titleKeys: ['id', 'title'],
   carryMode: 'open-rows', doneWhen: { key: 'status', values: ['Completed'] },
@@ -63,7 +52,6 @@ export const workOrderSection = (): Section => ({
   ],
 });
 
-/** Spares and consumables with a reorder level */
 export const sparesSection = (seed: Row[]): Section => ({
   key: 'spares', title: 'Spares & consumables', icon: '📦', kind: 'table', view: 'table', addLabel: 'Add item', titleKeys: ['item'],
   help: 'Stock turns red at or below the reorder level.',

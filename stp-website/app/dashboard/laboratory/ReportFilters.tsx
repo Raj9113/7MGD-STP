@@ -49,7 +49,6 @@ export default function ReportFilters({ month, show, counts, selected, days }: R
   return (
     <div className="mb-4 space-y-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-        {/* Day selector with previous / next */}
         <div className="flex items-center gap-2">
           {prev ? (
             <Link href={href(month, prev.date, show)} className={`${arrow} border-gray-200 hover:border-[#0062b8] hover:text-[#0062b8]`} aria-label="Previous day">‹</Link>
@@ -76,7 +75,6 @@ export default function ReportFilters({ month, show, counts, selected, days }: R
           )}
         </div>
 
-        {/* Filter pills */}
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter days">
           {FILTERS.map((f) => {
             const active = show === f.key;
@@ -96,7 +94,6 @@ export default function ReportFilters({ month, show, counts, selected, days }: R
         </div>
       </div>
 
-      {/* Day chips */}
       {days.length > 0 && (
         <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Days in this month">
           {days.map((d) => {

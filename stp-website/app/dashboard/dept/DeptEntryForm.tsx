@@ -22,7 +22,6 @@ interface Props {
   initial: DeptData;
   meta: EntryMeta;
   recent: RecentDay[];
-  /** the logged-in user's name, and whether they are Admin (Admin types person names; staff get their own login name) */
   userName: string;
   isAdmin: boolean;
 }
@@ -87,7 +86,6 @@ function Input({ f, value, onChange, error, warn, id }: { f: Field; value: strin
   );
 }
 
-/** A worked-out value (e.g. total units, stock balance): shown, never typed */
 function Derived({ f, row }: { f: Field; row: Record<string, string> }) {
   const typedRow = Object.fromEntries(Object.entries(row).map(([k, v]) => [k, v !== '' && Number.isFinite(Number(v)) ? Number(v) : v])) as Row;
   const d = f.derive!(typedRow);
@@ -111,12 +109,9 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
   const router = useRouter();
   const [state, formAction, pending] = useActionState(saveDeptReport, INIT);
   const [form, setForm] = useState<Form>(() => toForm(dept, initial));
-  // unsaved changes = edits made after the version that was last submitted successfully
   const [version, setVersion] = useState(0);
   const [submittedVersion, setSubmittedVersion] = useState(0);
   const [busy, setBusy] = useState(false);
-  // Staff stamp their own login name on one shift's supervisor box. When shifts overlap (General runs inside Morning and
-  // Evening) they say which one they are supervising; the server checks the choice against the clock.
   const [hour] = useState(() => istHour());
   const running = !isAdmin ? runningShifts(schema, hour) : [];
   const [myShift, setMyShift] = useState<string>(running.length === 1 ? running[0].key : '');
@@ -175,7 +170,6 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
         </div>
       )}
 
-      {/* Date + recent days */}
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <div>
@@ -257,7 +251,6 @@ export default function DeptEntryForm({ dept, date, today, initial, meta, recent
             <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
               {sec.fields.map((f) => {
                 const row = form[sec.key] as Record<string, string>;
-                // A person's name: staff cannot type it. It is their own login name on the shift they supervise (or the name saved earlier)
                 if (f.loginName && !isAdmin) {
                   const saved = toStr(asRow(initial[sec.key])[f.key]);
                   const mine = !saved && sec.key === myShift && running.some((r) => r.key === sec.key);

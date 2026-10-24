@@ -23,8 +23,6 @@ interface Profile {
   created_at: string | null;
 }
 
-// ── Edit Row ─────────────────────────────────────────────────────────────────
-
 const INIT_UPDATE: UpdateDeptState = { success: false, message: '' };
 const INIT_DELETE: DeleteUserState = { success: false, message: '' };
 
@@ -80,7 +78,6 @@ function UserRow({ profile, index }: { profile: Profile; index: number }) {
         </td>
       </tr>
 
-      {/* Edit Department Row */}
       {editing && (
         <tr className="bg-blue-50">
           <td colSpan={6} className="px-5 py-3">
@@ -125,7 +122,6 @@ function UserRow({ profile, index }: { profile: Profile; index: number }) {
         </tr>
       )}
 
-      {/* Delete Confirm Row */}
       {confirmDelete && (
         <tr className="bg-red-50">
           <td colSpan={6} className="px-5 py-3">
@@ -162,8 +158,6 @@ function UserRow({ profile, index }: { profile: Profile; index: number }) {
     </>
   );
 }
-
-// ── Main Table ────────────────────────────────────────────────────────────────
 
 interface UsersTableProps {
   profiles: Profile[];

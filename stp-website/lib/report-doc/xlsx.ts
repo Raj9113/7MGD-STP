@@ -1,11 +1,6 @@
 import JSZip from 'jszip';
 import { TONE_FILL, TONE_HEX, cellBold, cellText, cellTone, type Doc, type Tone } from './model';
 
-/**
- * Writes a Doc as an Excel workbook (.xlsx) from scratch: one sheet per chapter, coloured section bars, styled table
- * headers, status colours, frozen title rows and landscape print setup. Photographs are not placed in workbooks.
- */
-
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '');
 const colName = (i: number) => {
   let n = i + 1;
@@ -14,24 +9,21 @@ const colName = (i: number) => {
   return s;
 };
 
-// ── styles ────────────────────────────────────────────────────────────────────
-
 const FILL_COLORS = ['0E6E6B', '0062B8', 'D35400', 'B9770E', '1E8449', '6C3483', 'F4F9F9', ...Object.values(TONE_FILL), 'FFFFFF'];
 const fillIndex = (hex: string) => {
   const i = FILL_COLORS.indexOf(hex);
-  return i < 0 ? 0 : i + 2; // 0 and 1 are reserved by the format
+  return i < 0 ? 0 : i + 2;
 };
 const FONTS: { b?: boolean; color: string; sz: number }[] = [
-  { color: '333333', sz: 10 }, // 0 normal
-  { b: true, color: 'FFFFFF', sz: 10 }, // 1 white bold
-  { b: true, color: '0062B8', sz: 16 }, // 2 title
-  ...(['good', 'bad', 'warn', 'muted', 'info'] as Tone[]).map((t) => ({ b: t !== 'muted' && t !== 'info', color: TONE_HEX[t], sz: 10 })), // 3..7
-  { b: true, color: '333333', sz: 10 }, // 8 bold
-  { color: '777777', sz: 9 }, // 9 small
+  { color: '333333', sz: 10 },
+  { b: true, color: 'FFFFFF', sz: 10 },
+  { b: true, color: '0062B8', sz: 16 },
+  ...(['good', 'bad', 'warn', 'muted', 'info'] as Tone[]).map((t) => ({ b: t !== 'muted' && t !== 'info', color: TONE_HEX[t], sz: 10 })),
+  { b: true, color: '333333', sz: 10 },
+  { color: '777777', sz: 9 },
 ];
 const TONE_FONT: Record<Tone, number> = { good: 3, bad: 4, warn: 5, muted: 6, info: 7 };
 
-// cellXfs: [fontId, fillHex | null, border, halign, wrap]
 type Xf = [number, string | null, boolean, 'left' | 'center' | 'right', boolean];
 const XFS: Xf[] = [];
 const xfIndex = (font: number, fill: string | null, border: boolean, h: Xf[3], wrap: boolean) => {
@@ -53,8 +45,6 @@ function stylesXml(): string {
   );
 }
 
-// ── sheets ────────────────────────────────────────────────────────────────────
-
 interface Cell { v: string | number; s: number }
 
 const NUMERIC = /^-?\d+(\.\d+)?$/;
@@ -69,14 +59,14 @@ function sheetName(name: string, used: Set<string>): string {
 
 export async function renderXlsx(doc: Doc): Promise<Buffer> {
   XFS.length = 0;
-  xfIndex(0, null, false, 'left', false); // default style must be index 0
+  xfIndex(0, null, false, 'left', false);
   const used = new Set<string>();
   const sheets = doc.chapters.map((ch) => {
     const name = sheetName(ch.name, used);
     const rows: { cells: Cell[]; height?: number }[] = [];
     const merges: string[] = [];
     const widths: number[] = [];
-    let width = 8; // columns of the widest table: titles and notes merge across them
+    let width = 8;
     const grow = (i: number, len: number) => { widths[i] = Math.min(46, Math.max(widths[i] ?? 9, len + 2)); };
     for (const b of ch.blocks) if (b.t === 'table') width = Math.max(width, b.head.length);
 

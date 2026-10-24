@@ -31,19 +31,16 @@ export default async function LaboratoryView({
   canEdit = false,
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  /** Chemist / assistant / Admin: show the "add or correct a report" shortcuts */
   canEdit?: boolean;
 }) {
   const { data, setupNeeded } = await loadLab();
   const MONTH_KEYS = data.months.map((m) => m.key);
 
-  // ── Selection from the URL (?month=2026-09&day=2026-09-15) ─────────────────
   const sp = await searchParams;
   const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const month = getMonth(data.months, one(sp.month));
   const { days } = month;
 
-  // Day filter for the report browser: all days, only days with photos/power (Word report), or only days above a limit
   const showParam = one(sp.show);
   const show: ShowFilter = showParam === 'photos' || showParam === 'exceed' ? showParam : 'all';
   const counts = {
@@ -64,7 +61,6 @@ export default async function LaboratoryView({
   const summaries = Object.fromEntries(LIMITED.concat(['nh4', 'alk', 'temp', 'oil', 'do']).map((k) => [k, summarize(days, k)]));
   const outSeries = (k: Parameters<typeof summarize>[1]) => dailySeries(month.key, days, (d) => d[k]?.out);
 
-  // Power readings from the daily Word reports of this month
   const powerSeries = dailySeries(month.key, days, (d) => data.reports[d.date]?.power?.units);
   const powerDays = powerSeries.filter((v) => v !== null) as number[];
   const powerTotal = powerDays.reduce((a, b) => a + b, 0);
@@ -72,7 +68,6 @@ export default async function LaboratoryView({
   const powerPeak = { value: powerSeries[powerPeakIdx] ?? 0, date: `${month.key}-${String(powerPeakIdx + 1).padStart(2, '0')}` };
   const powerPf = mean(days.map((d) => data.reports[d.date]?.power?.pf));
 
-  // Long-term view: monthly averages across every month in the workbook
   const monthsWithData = data.months.filter((m) => m.days.length > 0);
   const trendLabels = monthsWithData.map((m) => monthLabel(m.key, 'short'));
   const monthlyOut = (k: Parameters<typeof summarize>[1]) => monthsWithData.map((m) => mean(m.days.map((d) => d[k]?.out)));
@@ -81,7 +76,6 @@ export default async function LaboratoryView({
 
   return (
     <div className="max-w-6xl space-y-8">
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">🧪 Laboratory Department</h2>
@@ -129,7 +123,6 @@ export default async function LaboratoryView({
         />
       )}
 
-      {/* Month summary */}
       <section>
         <SectionTitle hint={`${days.length} of ${days_n} days have readings`}>{monthLabel(month.key)} at a glance</SectionTitle>
         {days.length === 0 ? (
@@ -146,7 +139,6 @@ export default async function LaboratoryView({
 
       {days.length > 0 && (
         <>
-          {/* Charts */}
           <section>
             <SectionTitle hint="Dashed red line = permissible discharge limit">Day-by-day trends</SectionTitle>
             <div className="grid gap-4 lg:grid-cols-2">
@@ -179,13 +171,11 @@ export default async function LaboratoryView({
             </div>
           </section>
 
-          {/* Daily readings table */}
           <section>
             <SectionTitle hint="Red cells are above the permissible limit · 📷 = report with photos">Daily readings</SectionTitle>
             <DailyTable month={month.key} days={days} reports={data.reports} selected={day?.date} />
           </section>
 
-          {/* Daily report */}
           <section id="daily-report" className="scroll-mt-4">
             <SectionTitle hint={day ? dayLabel(day.date) : undefined}>Daily laboratory report</SectionTitle>
             <ReportFilters
@@ -204,7 +194,6 @@ export default async function LaboratoryView({
             )}
           </section>
 
-          {/* Power */}
           {powerDays.length > 0 && (
             <section>
               <SectionTitle hint="From the energy-meter section of each daily report">Power consumption</SectionTitle>
@@ -236,7 +225,6 @@ export default async function LaboratoryView({
         </>
       )}
 
-      {/* Long-term trend */}
       <section>
         <SectionTitle hint={`Monthly averages · ${monthLabel(MONTH_KEYS[0], 'short')} – ${monthLabel(MONTH_KEYS[MONTH_KEYS.length - 1], 'short')}`}>
           Long-term performance

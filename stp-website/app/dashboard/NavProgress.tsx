@@ -4,17 +4,12 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useSyncExternalStore } from 'react';
 import { endNav, getNavTarget, startNav, subscribeNav } from '@/lib/nav-pending';
 
-/**
- * Shows a thin progress bar the moment any link is clicked, and a "Loading…" pill if the next page takes longer than a
- * moment, until the new page has arrived.
- */
 export default function NavProgress() {
   const pathname = usePathname();
   const search = useSearchParams().toString();
   const current = pathname + (search ? `?${search}` : '');
   const target = useSyncExternalStore(subscribeNav, getNavTarget, () => null);
 
-  // Catch clicks on any internal link (sidebar, tabs, buttons that are links, ...)
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -26,7 +21,6 @@ export default function NavProgress() {
     return () => document.removeEventListener('click', onClick, true);
   }, []);
 
-  // The new page has arrived
   useEffect(() => {
     if (target !== null && target === current) endNav();
   }, [target, current]);

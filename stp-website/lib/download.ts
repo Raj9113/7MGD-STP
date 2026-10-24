@@ -1,4 +1,3 @@
-/** Browser helpers: fetch a generated file (showing the server's error message if it fails) and save it with its server-given name. */
 export async function fetchFile(url: string): Promise<{ blob: Blob; name: string | null }> {
   const res = await fetch(url);
   if (!res.ok) {

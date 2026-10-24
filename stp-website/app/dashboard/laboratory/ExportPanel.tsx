@@ -8,9 +8,7 @@ import FormatPicker, { FORMAT_INFO, type Format } from '../FormatPicker';
 interface ExportPanelProps {
   month: string;
   monthLabel: string;
-  /** The day currently open in the daily report */
   selectedDay?: string;
-  /** Range of dates that have readings (limits the pickers) */
   firstDate: string;
   lastDate: string;
 }
@@ -42,7 +40,6 @@ export default function ExportPanel({ month, monthLabel, selectedDay, firstDate,
   const range: [string, string] =
     mode === 'day' ? [selectedDay ?? from, selectedDay ?? from] : mode === 'month' ? [`${month}-01`, monthEnd] : [from, to];
   const badDates = mode === 'range' && (!from || !to || to < from);
-  // An Excel sheet is one month of the lab workbook
   const crossMonth = format === 'xlsx' && mode === 'range' && !badDates && from.slice(0, 7) !== to.slice(0, 7);
   const invalid = badDates || crossMonth;
 

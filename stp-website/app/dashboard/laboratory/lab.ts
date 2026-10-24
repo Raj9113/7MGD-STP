@@ -1,8 +1,5 @@
 import raw from '@/data/lab/lab-data.json';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-// The JSON is generated from the lab team's Excel/Word files by scripts/build-lab-data.py.
-
 export type ParamKey =
   | 'temp' | 'ph' | 'bod' | 'cod' | 'tss' | 'phos' | 'alk' | 'do' | 'tn' | 'nh4' | 'oil' | 'coliform';
 
@@ -32,14 +29,10 @@ export interface LabData {
   limits: Partial<Record<ParamKey, Limit>>;
   months: LabMonth[];
   reports: Record<string, DayReport>;
-  /** Days entered through the portal form (not from the Excel/Word files): who saved them and when */
   live?: Record<string, { by: string | null; at: string }>;
 }
 
-/** The history generated from the lab team's files. Live entries from the portal are merged on top (see mergeLive). */
 export const lab = raw as unknown as LabData;
-
-// ── Entries made on the portal ────────────────────────────────────────────────
 
 export interface LiveRow {
   date: string;
@@ -50,10 +43,6 @@ export interface LiveRow {
   updated_by_name: string | null;
 }
 
-/**
- * Overlays portal entries (table `lab_daily`) on the file-based history. A portal entry replaces that day's readings;
- * photos and power fall back to the file-based report for anything the portal entry doesn't have.
- */
 export function mergeLive(base: LabData, rows: LiveRow[]): LabData {
   const months: LabMonth[] = base.months.map((m) => ({ ...m, days: [...m.days] }));
   const reports = { ...base.reports };
@@ -89,8 +78,6 @@ export function mergeLive(base: LabData, rows: LiveRow[]): LabData {
   return { ...base, months, reports, live };
 }
 
-// ── Parameter catalogue ───────────────────────────────────────────────────────
-
 export interface ParamMeta {
   key: ParamKey;
   label: string;
@@ -113,7 +100,6 @@ export const PARAMS: ParamMeta[] = [
   { key: 'oil', label: 'Oil & Grease', short: 'O&G', unit: 'mg/l', decimals: 1 },
 ];
 
-/** Parameters judged against a permissible discharge limit, in display order. */
 export const LIMITED: ParamKey[] = ['bod', 'cod', 'tss', 'phos', 'tn', 'ph'];
 
 export const PARAM = Object.fromEntries(PARAMS.map((p) => [p.key, p])) as Record<ParamKey, ParamMeta>;
@@ -123,8 +109,6 @@ export function limitText(l?: Limit): string {
   if (l.min !== undefined && l.max !== undefined) return `${l.min} – ${l.max}`;
   return `≤ ${l.max}`;
 }
-
-// ── Month / day selection ─────────────────────────────────────────────────────
 
 export function getMonth(months: LabMonth[], key: string | undefined) {
   return months.find((m) => m.key === key) ?? months[months.length - 1];
@@ -149,8 +133,6 @@ export function daysInMonth(key: string): number {
   return new Date(Date.UTC(y, m, 0)).getUTCDate();
 }
 
-// ── Maths ─────────────────────────────────────────────────────────────────────
-
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 export function mean(values: (number | null | undefined)[]): number | null {
@@ -173,7 +155,6 @@ export function fmt(v: number | null | undefined, decimals = 1): string {
   return v.toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
-/** Flow values range from 0.004 to ~1.5 MGD and are logged to 2–3 decimals: show 3 only when the third digit matters. */
 export function fmtFlow(v: number | null | undefined): string {
   if (!isNum(v)) return '—';
   return v.toFixed(3).replace(/0$/, '');
@@ -183,7 +164,6 @@ export interface ParamSummary {
   key: ParamKey;
   inAvg: number | null;
   outAvg: number | null;
-  /** % reduction between the average inlet and average outlet, over days where both were measured */
   removal: number | null;
   daysChecked: number;
   daysOk: number;
@@ -206,14 +186,12 @@ export function summarize(days: DayRecord[], key: ParamKey): ParamSummary {
   };
 }
 
-/** A day is "fully compliant" when every measured limit parameter (BOD, COD, TSS, Phos., TN, pH) is within its limit. */
 export function dayCompliance(d: DayRecord): 'pass' | 'fail' | 'na' {
   const states = LIMITED.map((k) => limitStatus(k, d[k]?.out)).filter((s) => s !== 'na');
   if (states.length < 3) return 'na';
   return states.every((s) => s === 'ok') ? 'pass' : 'fail';
 }
 
-/** How many limit parameters are outside their permissible limit at the outlet on this day. */
 export function exceedCount(d: DayRecord): number {
   return LIMITED.filter((k) => ['over', 'under'].includes(limitStatus(k, d[k]?.out))).length;
 }
@@ -229,7 +207,6 @@ export function monthStats(days: DayRecord[]) {
   };
 }
 
-/** Series of one value per calendar day of the month (null where there is no reading). */
 export function dailySeries(key: string, days: DayRecord[], pick: (d: DayRecord) => number | null | undefined) {
   const byDate = new Map(days.map((d) => [d.date, d]));
   return Array.from({ length: daysInMonth(key) }, (_, i) => {

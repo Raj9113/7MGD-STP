@@ -7,7 +7,6 @@ const MESSAGES: Record<string, string> = {
   invite_expired: 'Your invitation link has expired or was already used. Ask an admin to send a new invitation, or log in below if you already set a password.',
 };
 
-/** Explains why the user landed here after a failed invite / reset link (the login page used to ignore ?error=) */
 export default function LinkNotice() {
   const code = useSearchParams().get('error');
   if (!code) return null;

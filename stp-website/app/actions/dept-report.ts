@@ -15,7 +15,6 @@ export interface SaveDeptState {
   success: boolean;
   message: string;
   date?: string;
-  /** keys as produced by lib/dept-report/validate.ts (section.field / section[row].field / remarks / form / date) */
   errors?: Record<string, string>;
 }
 
@@ -61,7 +60,6 @@ export async function saveDeptReport(_prev: SaveDeptState, formData: FormData): 
 
     const who = profile?.full_name || user.email || 'Unknown';
 
-    // Person names (e.g. shift supervisor): department staff get their own login name, only Admin types them
     const data = profile?.department === 'Admin'
       ? parsed.data
       : applyLoginNames(SCHEMAS[dept], parsed.data, (existing?.data as DeptData | null) ?? null, who, istHour(), String(formData.get('shift') ?? '') || null);

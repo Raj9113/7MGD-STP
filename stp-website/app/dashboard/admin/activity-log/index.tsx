@@ -36,7 +36,6 @@ export default function ActivityLogPanel({ initialLogs, initialTotal }: Activity
   return (
     <div className="space-y-4">
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-bold text-gray-800">📋 Activity Audit Log</h3>

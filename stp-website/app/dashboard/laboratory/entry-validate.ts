@@ -11,10 +11,6 @@ export type ParsedEntry =
 
 const round = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d;
 
-/**
- * Turns the submitted form values into clean data, or a list of field errors.
- * `get(name)` returns the raw string for an input (empty / missing = not measured).
- */
 export function parseEntry(get: (name: string) => string | null | undefined, today: string): ParsedEntry {
   const errors: Record<string, string> = {};
 

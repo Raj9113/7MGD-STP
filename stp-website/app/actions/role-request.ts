@@ -43,7 +43,6 @@ export async function submitRoleRequest(
 
     const admin = createAdminClient();
 
-    // Check for existing pending request from this user
     const { data: existing } = await admin
       .from('role_requests')
       .select('id')
@@ -74,7 +73,6 @@ export async function submitRoleRequest(
       return { success: false, message: 'Failed to submit request. Please try again.' };
     }
 
-    // Send email to admin
     const siteUrl    = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
     const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;
 

@@ -14,7 +14,6 @@ const longDate = (iso: string) =>
 const when = (iso: string) =>
   new Date(iso).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
 
-/** Energy used over the 14 days up to a date (Electrical) */
 async function EnergyTrend({ date }: { date: string }) {
   const from = new Date(`${date}T00:00:00Z`);
   from.setUTCDate(from.getUTCDate() - 13);
@@ -46,7 +45,6 @@ async function EnergyTrend({ date }: { date: string }) {
   );
 }
 
-/** A department page: the chosen day's report drawn from its schema, with date navigation and an entry button. */
 export default async function DeptPage({ dept, searchParams }: { dept: DeptSlug; searchParams: SearchParams }) {
   const schema = SCHEMAS[dept];
   const supabase = await createClient();
@@ -76,7 +74,6 @@ export default async function DeptPage({ dept, searchParams }: { dept: DeptSlug;
 
   return (
     <div className="max-w-6xl space-y-6">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">{schema.icon} {schema.label} Department</h2>
@@ -139,4 +136,3 @@ export default async function DeptPage({ dept, searchParams }: { dept: DeptSlug;
     </div>
   );
 }
-

@@ -6,7 +6,6 @@ const TEXT_MAX = 120;
 const DEFAULT_MAX_ROWS = 40;
 const CONTROL = /[\u0000-\u0008\u000b-\u001f\u007f]/g;
 
-/** error keys: `section.field` for single-value sections, `section[3].field` for the 4th row of a table */
 export const errorKey = (section: string, field: string, row?: number) => (row === undefined ? `${section}.${field}` : `${section}[${row}].${field}`);
 
 function cell(f: Field, raw: unknown, key: string, errors: Record<string, string>): Cell | undefined {
@@ -45,7 +44,6 @@ function row(fields: Field[], raw: unknown, section: string, index: number | und
     const v = cell(f, src[f.key], errorKey(section, f.key, index), errors);
     if (v !== undefined) out[f.key] = v;
   }
-  // worked-out values are always recomputed here, whatever the browser sent
   for (const f of fields) {
     if (!f.derive) continue;
     delete out[f.key];
@@ -55,7 +53,6 @@ function row(fields: Field[], raw: unknown, section: string, index: number | und
   return out;
 }
 
-/** Cleans the submitted report (any shape) into stored data, or lists what is wrong. Blank = not recorded. */
 export function parseReport(schema: DeptSchema, raw: unknown): ParsedReport {
   const errors: Record<string, string> = {};
   const input = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};

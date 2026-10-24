@@ -131,7 +131,6 @@ function Table({ sec, rows }: { sec: Section; rows: Row[] }) {
   );
 }
 
-/** Draws one day's department report from its schema: stat tiles, equipment cards and tables, then the remarks. */
 export default function DeptReportView({ schema, data }: { schema: DeptSchema; data: DeptData }) {
   return (
     <div className="space-y-6">

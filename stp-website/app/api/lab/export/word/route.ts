@@ -5,10 +5,6 @@ import { labFileName, readRange } from '@/lib/lab-export/names';
 import { parsePhotoSrc, readLabPhoto } from '@/lib/lab-export/photos';
 import { buildDailyReports, ExportTooLarge, type DayPhoto } from '@/lib/lab-export/word';
 
-/**
- * GET /api/lab/export/word?from=2026-09-10&to=2026-09-15&photos=1
- * One page per day (days that have lab readings) in the lab team's own Word layout (see lib/lab-export/word.ts).
- */
 export async function GET(request: Request) {
   const denied = await requireLabViewer();
   if (denied) return denied;

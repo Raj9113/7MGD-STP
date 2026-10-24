@@ -39,7 +39,6 @@ export default async function LabEntryPage({
   const report = data.reports[date];
   const live = data.live?.[date];
 
-  // Pre-fill every input from what is already recorded for this date
   const defaults: Record<string, string> = {};
   const put = (name: string, v: number | null | undefined) => {
     if (typeof v === 'number') defaults[name] = String(v);
@@ -56,7 +55,6 @@ export default async function LabEntryPage({
       ? { kind: 'file' }
       : { kind: 'new' };
 
-  // Last 10 days: which ones still need a report
   const recent: RecentDay[] = Array.from({ length: 10 }, (_, i) => {
     const t = new Date(`${today}T00:00:00Z`);
     t.setUTCDate(t.getUTCDate() - i);

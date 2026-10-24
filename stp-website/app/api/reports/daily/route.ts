@@ -14,7 +14,7 @@ import { renderDocx } from '@/lib/report-doc/docx';
 import { renderXlsx } from '@/lib/report-doc/xlsx';
 
 const MAX_DAYS = 31;
-const MAX_BYTES = 4_300_000; // what the host can return in one response (Vercel: 4.5 MB)
+const MAX_BYTES = 4_300_000;
 const isDate = (s: string | null): s is string =>
   !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 const ddmmyyyy = (iso: string) => iso.split('-').reverse().join('-');
@@ -26,12 +26,6 @@ const FORMATS = {
 } as const;
 type Format = keyof typeof FORMATS;
 
-/**
- * GET /api/reports/daily?format=pdf|docx|xlsx&from=2026-09-15&to=2026-09-15&photos=1
- *
- * Admin only. A PDF, Word file or Excel workbook with one chapter per day: summary, laboratory (readings, photos, power), and the daily reports of the
- * Electrical, Mechanical and Housekeeping departments, then that day's portal activity.
- */
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -51,13 +45,11 @@ export async function GET(request: Request) {
   if (span > MAX_DAYS) return NextResponse.json({ error: `Choose at most ${MAX_DAYS} days at a time.` }, { status: 400 });
   const format = (q.get('format') ?? 'pdf') as Format;
   if (!(format in FORMATS)) return NextResponse.json({ error: 'Choose PDF, Word or Excel.' }, { status: 400 });
-  // Excel workbooks hold figures only: no photographs
   const withPhotos = q.get('photos') !== '0' && format !== 'xlsx';
 
   const days = Array.from({ length: span }, (_, i) => new Date(Date.parse(from) + i * 86400000).toISOString().slice(0, 10));
   const { data: lab } = await loadLab();
 
-  // Portal activity for the period (IST day boundaries)
   let activity: ActivityRow[] = [];
   try {
     const { data } = await createAdminClient()
@@ -72,7 +64,6 @@ export async function GET(request: Request) {
     console.error('[daily report] activity log unavailable:', err);
   }
 
-  // Mechanical / Electrical / Housekeeping daily reports for the period
   const { value: stored } = await loadAllRange(from, to);
   const dept = new Map(
     [...stored].map(([k, r]) => [k, { data: r.data, created_by_name: r.created_by_name, updated_by_name: r.updated_by_name, updated_at: r.updated_at }]),
@@ -97,7 +88,6 @@ export async function GET(request: Request) {
   const generated = `Generated ${stamp.slice(8, 10)}-${stamp.slice(5, 7)}-${stamp.slice(0, 4)} ${stamp.slice(11, 16)} IST by ${profile?.full_name || user.email || 'Admin'}`;
 
   try {
-    // Photos dominate the size: step the resolution down until it fits what the host can return
     let file: Uint8Array | null = null;
     for (const width of withPhotos ? [1000, 700, 480] : [1000]) {
       const input = { days, lab, dept, activity, photos, generated, logos, photoWidth: width };

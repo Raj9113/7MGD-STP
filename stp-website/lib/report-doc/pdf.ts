@@ -15,7 +15,6 @@ async function embed(kit: Kit, bytes: Buffer, width: number): Promise<PDFImage |
   }
 }
 
-/** Draws a Doc: every chapter starts on a new page; tables continue across pages with a repeated header. */
 export async function renderPdf(doc: Doc, logos: Logos, photoWidth = 1000): Promise<Uint8Array> {
   const kit = await Kit.create(logos);
 
